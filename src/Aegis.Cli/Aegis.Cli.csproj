@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Aegis.Domain\Aegis.Domain.csproj" />
     <ProjectReference Include="..\Aegis.Controls\Aegis.Controls.csproj" />
+    <ProjectReference Include="..\Aegis.Graph\Aegis.Graph.csproj" />
   </ItemGroup>
 
   <ItemGroup>

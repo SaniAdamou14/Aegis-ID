@@ -1,9 +1,10 @@
 # Setting up the development tenant
 
 This is a manual, one-time setup you do in the browser — it cannot be
-scripted or automated from here. Once done, Aegis-ID's real Microsoft
-Graph authentication (US-001/002/003/004) can be implemented against a
-live tenant instead of only fixture snapshots.
+scripted or automated from here. `aegis doctor` and `aegis scan` (US-001/003/004)
+are already implemented and unit-tested against fixture HTTP responses, but
+have never been run against a real tenant. Once this setup is done, that's
+the one thing left to validate.
 
 ## 1. Create the Microsoft 365 Developer Program tenant
 
@@ -58,13 +59,20 @@ credentials used by Aegis-ID itself.
 
 ## 5. Store credentials locally — never in chat, never in git
 
+`tenantId` and `clientId` are not secret — pass them as CLI flags. The
+client secret is: set it via the `AEGIS_CLIENT_SECRET` environment variable
+(never printed, never logged) rather than typing it on the command line
+where it could end up in shell history.
+
 ```bash
-dotnet user-secrets init --project src/Aegis.Cli
-dotnet user-secrets set "Aegis:TenantId" "<tenant-id>" --project src/Aegis.Cli
-dotnet user-secrets set "Aegis:ClientId" "<client-id>" --project src/Aegis.Cli
-dotnet user-secrets set "Aegis:ClientSecret" "<client-secret>" --project src/Aegis.Cli
+export AEGIS_CLIENT_SECRET="<client-secret>"   # PowerShell: $env:AEGIS_CLIENT_SECRET = "<client-secret>"
+
+dotnet run --project src/Aegis.Cli -- doctor \
+  --tenant-id "<tenant-id>" --client-id "<client-id>"
+
+dotnet run --project src/Aegis.Cli -- scan \
+  --tenant-id "<tenant-id>" --client-id "<client-id>" --fail-on Critical
 ```
 
-Or, for CI-style usage, the `AEGIS_CLIENT_SECRET` environment variable
-(see US-001). `.gitignore` already excludes `*.env` and
-`appsettings.Local.json`.
+`.gitignore` already excludes `*.env` and `appsettings.Local.json` if you
+prefer to keep credentials in a local dotenv-style file instead.

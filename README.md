@@ -16,10 +16,22 @@ and reports. It modifies nothing, deletes nothing, creates nothing.
 
 - Domain model (`TenantSnapshot`, `Finding`, control engine, scoring) — in progress.
 - Controls implemented so far: IAM-001, IAM-003, IAM-005, IAM-006, IAM-009.
-- CLI: `aegis evaluate --from <snapshot.json>`, `aegis demo` (offline, no
-  network calls, uses a synthetic snapshot).
-- Live Microsoft Graph authentication and collection are not implemented
-  yet — everything runs today against snapshot files.
+- CLI, offline (no network, no tenant needed):
+  - `aegis demo` — synthetic embedded snapshot.
+  - `aegis evaluate --from <snapshot.json> [--fail-on <Severity>]`
+- CLI, live Microsoft Graph (client credentials flow, US-001/003/004):
+  - `aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]` —
+    reports which of the six required read-only permissions are granted,
+    and warns if a write scope was granted by mistake.
+  - `aegis scan --tenant-id <id> --client-id <id> [--secret <secret>]
+    [--fail-on <Severity>] [--dump <snapshot.json>]` — collects a live
+    tenant snapshot (paginated, retries on 429/5xx with backoff + jitter)
+    and evaluates it with the same engine as `evaluate`.
+  - The live collection layer (`src/Aegis.Graph`) is unit-tested against
+    fixture HTTP responses, but has not yet been validated end-to-end
+    against a real tenant — see `docs/dev-tenant-setup.md`.
+  - Client secret: `--secret`, or the `AEGIS_CLIENT_SECRET` environment
+    variable. Never logged, never printed.
 
 See `Aegis-ID_Product_Backlog.md` for the full product backlog.
 
