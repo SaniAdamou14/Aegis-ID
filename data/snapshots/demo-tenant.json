@@ -1,0 +1,101 @@
+{
+  "tenantInfo": {
+    "tenantId": "00000000-0000-0000-0000-000000000001",
+    "displayName": "Aegis-ID Demo Tenant"
+  },
+  "users": [
+    {
+      "id": "u-001",
+      "userPrincipalName": "alice.admin@demo.aegis-id.dev",
+      "displayName": "Alice Admin",
+      "assignedRoles": ["Global Administrator"],
+      "authenticationMethods": []
+    },
+    {
+      "id": "u-002",
+      "userPrincipalName": "bob.admin@demo.aegis-id.dev",
+      "displayName": "Bob Admin",
+      "assignedRoles": ["Global Administrator"],
+      "authenticationMethods": ["Sms"]
+    },
+    {
+      "id": "u-003",
+      "userPrincipalName": "carol.security@demo.aegis-id.dev",
+      "displayName": "Carol Security",
+      "assignedRoles": ["Security Administrator"],
+      "authenticationMethods": ["Fido2"]
+    },
+    {
+      "id": "u-004",
+      "userPrincipalName": "breakglass.emergency@demo.aegis-id.dev",
+      "displayName": "Break Glass Emergency Access",
+      "assignedRoles": ["Global Administrator"],
+      "authenticationMethods": [],
+      "isBreakGlassAccount": true
+    },
+    {
+      "id": "u-005",
+      "userPrincipalName": "dave.admin@demo.aegis-id.dev",
+      "displayName": "Dave Admin",
+      "assignedRoles": ["Global Administrator"],
+      "authenticationMethods": ["WindowsHelloForBusiness"]
+    },
+    {
+      "id": "u-006",
+      "userPrincipalName": "erin.admin@demo.aegis-id.dev",
+      "displayName": "Erin Admin",
+      "assignedRoles": ["Global Administrator"],
+      "authenticationMethods": ["MicrosoftAuthenticator"]
+    },
+    {
+      "id": "u-007",
+      "userPrincipalName": "frank.user@demo.aegis-id.dev",
+      "displayName": "Frank User",
+      "assignedRoles": [],
+      "authenticationMethods": ["MicrosoftAuthenticator"]
+    }
+  ],
+  "applications": [
+    {
+      "id": "app-001",
+      "displayName": "Payroll-Integration-App",
+      "credentials": [
+        { "type": "Secret", "expiresOn": "2026-08-05T00:00:00Z" }
+      ],
+      "grantedGraphPermissions": ["User.Read"]
+    },
+    {
+      "id": "app-002",
+      "displayName": "Legacy-Sync-Tool",
+      "credentials": [
+        { "type": "Secret", "expiresOn": null }
+      ],
+      "grantedGraphPermissions": ["Directory.ReadWrite.All", "Mail.Send"]
+    },
+    {
+      "id": "app-003",
+      "displayName": "Reporting-App",
+      "credentials": [
+        { "type": "Certificate", "expiresOn": "2031-01-01T00:00:00Z" }
+      ],
+      "grantedGraphPermissions": ["Reports.Read.All"]
+    }
+  ],
+  "conditionalAccessPolicies": [
+    {
+      "id": "ca-001",
+      "displayName": "Require MFA for admins",
+      "state": "Enabled",
+      "clientAppTypes": ["browser", "mobileAppsAndDesktopClients"],
+      "grantControls": ["mfa"]
+    },
+    {
+      "id": "ca-002",
+      "displayName": "Report only - block legacy auth",
+      "state": "ReportOnly",
+      "clientAppTypes": ["exchangeActiveSync", "other"],
+      "grantControls": ["block"]
+    }
+  ],
+  "collectedAt": "2026-07-24T00:00:00Z"
+}
