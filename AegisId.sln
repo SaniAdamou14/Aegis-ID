@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8E4A5800-EB8B-481B-855D-7EAB20503A2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aegis.Domain", "src\Aegis.Domain\Aegis.Domain.csproj", "{BD54F8AD-BCFB-4E2B-9CB6-F08F6B473F60}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aegis.Controls", "src\Aegis.Controls\Aegis.Controls.csproj", "{E25F7195-087F-4727-8450-6EB4D1B513B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aegis.Cli", "src\Aegis.Cli\Aegis.Cli.csproj", "{CD74C3E6-EBC4-46E1-B583-C0FC9280C1D4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7828BF02-1B03-4079-AB5F-23A477C5307E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aegis.Domain.Tests", "tests\Aegis.Domain.Tests\Aegis.Domain.Tests.csproj", "{79997918-58C4-4645-A8F8-2D5DC64F85B6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BD54F8AD-BCFB-4E2B-9CB6-F08F6B473F60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD54F8AD-BCFB-4E2B-9CB6-F08F6B473F60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD54F8AD-BCFB-4E2B-9CB6-F08F6B473F60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD54F8AD-BCFB-4E2B-9CB6-F08F6B473F60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E25F7195-087F-4727-8450-6EB4D1B513B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E25F7195-087F-4727-8450-6EB4D1B513B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E25F7195-087F-4727-8450-6EB4D1B513B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E25F7195-087F-4727-8450-6EB4D1B513B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD74C3E6-EBC4-46E1-B583-C0FC9280C1D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD74C3E6-EBC4-46E1-B583-C0FC9280C1D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD74C3E6-EBC4-46E1-B583-C0FC9280C1D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD74C3E6-EBC4-46E1-B583-C0FC9280C1D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79997918-58C4-4645-A8F8-2D5DC64F85B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79997918-58C4-4645-A8F8-2D5DC64F85B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79997918-58C4-4645-A8F8-2D5DC64F85B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79997918-58C4-4645-A8F8-2D5DC64F85B6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BD54F8AD-BCFB-4E2B-9CB6-F08F6B473F60} = {8E4A5800-EB8B-481B-855D-7EAB20503A2D}
+		{E25F7195-087F-4727-8450-6EB4D1B513B1} = {8E4A5800-EB8B-481B-855D-7EAB20503A2D}
+		{CD74C3E6-EBC4-46E1-B583-C0FC9280C1D4} = {8E4A5800-EB8B-481B-855D-7EAB20503A2D}
+		{79997918-58C4-4645-A8F8-2D5DC64F85B6} = {7828BF02-1B03-4079-AB5F-23A477C5307E}
+	EndGlobalSection
+EndGlobal

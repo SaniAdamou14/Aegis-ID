@@ -1,0 +1,24 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Secrets and local config
+*.env
+.env
+appsettings.Local.json
+
+## Tenant snapshots (may contain real tenant data) — demo fixture is the explicit exception
+*.snapshot.json
+!data/snapshots/demo-tenant.json
+
+## Angular / Node (future dashboard)
+node_modules/
+dist/
+.angular/
+
+## OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+title = "Aegis-ID gitleaks config"
+
+[extend]
+useDefault = true
+
+# Local pre-commit hook (optional, run manually until wired into CI):
+#   gitleaks protect --staged -v --config .gitleaks.toml
