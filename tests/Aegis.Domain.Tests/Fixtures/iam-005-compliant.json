@@ -1,0 +1,14 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [],
+  "applications": [
+    {
+      "id": "app-1",
+      "displayName": "Healthy Cert App",
+      "credentials": [ { "type": "Certificate", "expiresOn": "2027-01-01T00:00:00Z" } ],
+      "grantedGraphPermissions": []
+    }
+  ],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

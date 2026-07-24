@@ -1,0 +1,15 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [],
+  "applications": [],
+  "conditionalAccessPolicies": [
+    {
+      "id": "ca-1",
+      "displayName": "Block legacy auth",
+      "state": "Enabled",
+      "clientAppTypes": ["exchangeActiveSync", "other"],
+      "grantControls": ["block"]
+    }
+  ],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

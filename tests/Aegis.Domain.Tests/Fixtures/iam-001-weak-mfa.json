@@ -1,0 +1,15 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [
+    {
+      "id": "u-1",
+      "userPrincipalName": "weak-mfa.admin@fixture.test",
+      "displayName": "Weak MFA Admin",
+      "assignedRoles": ["Security Administrator"],
+      "authenticationMethods": ["Sms"]
+    }
+  ],
+  "applications": [],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

@@ -1,0 +1,20 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [],
+  "applications": [
+    {
+      "id": "app-1",
+      "displayName": "Expiring Secret App",
+      "credentials": [ { "type": "Secret", "expiresOn": "2026-01-11T00:00:00Z" } ],
+      "grantedGraphPermissions": []
+    },
+    {
+      "id": "app-2",
+      "displayName": "No Expiration App",
+      "credentials": [ { "type": "Secret", "expiresOn": null } ],
+      "grantedGraphPermissions": []
+    }
+  ],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

@@ -1,0 +1,16 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [
+    {
+      "id": "u-1",
+      "userPrincipalName": "breakglass@fixture.test",
+      "displayName": "Break Glass",
+      "assignedRoles": ["Global Administrator"],
+      "authenticationMethods": [],
+      "isBreakGlassAccount": true
+    }
+  ],
+  "applications": [],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

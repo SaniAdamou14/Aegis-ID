@@ -1,0 +1,11 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [
+    { "id": "u-1", "userPrincipalName": "ga1@fixture.test", "displayName": "GA 1", "assignedRoles": ["Global Administrator"], "authenticationMethods": ["Fido2"] },
+    { "id": "u-2", "userPrincipalName": "ga2@fixture.test", "displayName": "GA 2", "assignedRoles": ["Global Administrator"], "authenticationMethods": ["Fido2"] },
+    { "id": "u-3", "userPrincipalName": "ga3@fixture.test", "displayName": "GA 3", "assignedRoles": ["Global Administrator"], "authenticationMethods": ["Fido2"] }
+  ],
+  "applications": [],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}
