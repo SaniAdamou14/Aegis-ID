@@ -59,11 +59,12 @@ publishes self-contained single-file binaries for Linux, Windows, and macOS
 to the GitHub release, and a container image to
 `ghcr.io/saniadamou14/aegis-id`.
 
-Known gaps: there is no coverage badge yet — that needs a third-party
+A branch ruleset on `master` requires the `build-and-test` and `gitleaks`
+checks to pass before a push or merge is accepted.
+
+Known gap: there is no coverage badge yet — that needs a third-party
 coverage service (e.g. Codecov) wired to an account, not just a workflow
-file. Branch protection (failing CI blocking merge) must be turned on once
-in the repository's GitHub settings — it isn't something a workflow file can
-set.
+file.
 
 ## Development
 
