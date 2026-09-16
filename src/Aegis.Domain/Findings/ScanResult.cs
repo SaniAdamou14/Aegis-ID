@@ -9,5 +9,5 @@ public sealed record ScanResult(
     public IEnumerable<Finding> AllFindings => ControlResults.SelectMany(r => r.Findings);
 
     public int CountBySeverity(Severity severity) =>
-        AllFindings.Count(f => f.Severity == severity && !f.IsExpectedException);
+        AllFindings.Count(f => f.Severity == severity && !f.IsExpectedException && !f.IsSuppressed);
 }

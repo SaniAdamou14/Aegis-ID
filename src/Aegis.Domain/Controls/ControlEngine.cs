@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Aegis.Domain.Findings;
 using Aegis.Domain.Snapshot;
@@ -32,11 +33,12 @@ public sealed class ControlEngine
 
         foreach (var control in _controls)
         {
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 var findings = control.Evaluate(snapshot);
                 var status = findings.Count > 0 ? ControlStatus.Failed : ControlStatus.Passed;
-                results.Add(new ControlResult(control.Id, control.Title, status, findings));
+                results.Add(new ControlResult(control.Id, control.Title, status, findings, Duration: stopwatch.Elapsed));
             }
             catch (Exception ex)
             {
@@ -45,7 +47,8 @@ public sealed class ControlEngine
                     control.Title,
                     ControlStatus.Error,
                     Array.Empty<Finding>(),
-                    ErrorMessage: ex.Message));
+                    ErrorMessage: ex.Message,
+                    Duration: stopwatch.Elapsed));
             }
         }
 

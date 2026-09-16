@@ -9,7 +9,7 @@ public static class ConsoleReporter
         Severity.Critical, Severity.High, Severity.Medium, Severity.Low, Severity.Info,
     ];
 
-    public static void Report(ScanResult result, TextWriter output)
+    public static void Report(ScanResult result, TextWriter output, bool quiet = false, bool verbose = false)
     {
         var useColor = !Console.IsOutputRedirected && Environment.GetEnvironmentVariable("NO_COLOR") is null;
 
@@ -30,6 +30,10 @@ public static class ConsoleReporter
         foreach (var severity in SeverityOrder)
             WriteColored($"{severity}: {result.CountBySeverity(severity)}", SeverityColor(severity));
 
+        var suppressedCount = result.AllFindings.Count(f => f.IsSuppressed);
+        if (suppressedCount > 0)
+            output.WriteLine($"Suppressed: {suppressedCount}");
+
         output.WriteLine();
 
         var passed = result.ControlResults.Count(r => r.Status == ControlStatus.Passed);
@@ -39,6 +43,17 @@ public static class ConsoleReporter
         output.WriteLine($"Controls: {passed} passed, {failed} failed, {skipped} skipped, {errored} errored");
         output.WriteLine();
 
+        if (quiet)
+            return;
+
+        if (verbose)
+        {
+            output.WriteLine("Control durations:");
+            foreach (var cr in result.ControlResults.OrderBy(r => r.ControlId, StringComparer.Ordinal))
+                output.WriteLine($"  {cr.ControlId}: {cr.Duration.TotalMilliseconds:F0}ms");
+            output.WriteLine();
+        }
+
         foreach (var controlResult in result.ControlResults
                      .Where(r => r.Findings.Count > 0)
                      .OrderByDescending(r => r.Findings.Max(f => f.Severity)))
@@ -47,7 +62,12 @@ public static class ConsoleReporter
 
             foreach (var finding in controlResult.Findings.OrderByDescending(f => f.Severity))
             {
-                var tag = finding.IsExpectedException ? " [expected exception]" : "";
+                var tag = finding.IsSuppressed
+                    ? $" [suppressed: {finding.SuppressionReason}]"
+                    : finding.IsExpectedException
+                        ? " [expected exception]"
+                        : "";
+
                 WriteColored(
                     $"  [{finding.Severity}]{tag} {finding.ObjectType} '{finding.ObjectName}': {finding.Evidence}",
                     SeverityColor(finding.Severity));

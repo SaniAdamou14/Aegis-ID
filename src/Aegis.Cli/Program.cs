@@ -1,5 +1,6 @@
 using System.Reflection;
 using Aegis.Cli.Reporting;
+using Aegis.Cli.Suppressions;
 using Aegis.Controls.Iam;
 using Aegis.Domain.Controls;
 using Aegis.Domain.Findings;
@@ -37,6 +38,9 @@ int RunEvaluate(string[] rest)
     Severity? failOn = null;
     string outputFormat = "console";
     string? filePath = null;
+    string? suppressionsPath = null;
+    var quiet = false;
+    var verbose = false;
 
     for (var i = 0; i < rest.Length; i++)
     {
@@ -65,6 +69,18 @@ int RunEvaluate(string[] rest)
                 filePath = rest[++i];
                 break;
 
+            case "--suppressions" when i + 1 < rest.Length:
+                suppressionsPath = rest[++i];
+                break;
+
+            case "--quiet":
+                quiet = true;
+                break;
+
+            case "--verbose":
+                verbose = true;
+                break;
+
             default:
                 Console.Error.WriteLine($"Unknown argument '{rest[i]}'.");
                 return 2;
@@ -90,25 +106,58 @@ int RunEvaluate(string[] rest)
 
     var result = engine.Run(snapshot);
 
-    var writeExitCode = WriteReport(result, outputFormat, filePath);
+    if (!TryApplySuppressions(suppressionsPath, ref result))
+        return 2;
+
+    var writeExitCode = WriteReport(result, outputFormat, filePath, quiet, verbose);
     if (writeExitCode != 0)
         return writeExitCode;
 
     if (failOn is { } threshold)
     {
-        var hasBreach = result.AllFindings.Any(f => !f.IsExpectedException && f.Severity >= threshold);
+        var hasBreach = result.AllFindings.Any(f => !f.IsExpectedException && !f.IsSuppressed && f.Severity >= threshold);
         return hasBreach ? 1 : 0;
     }
 
     return 0;
 }
 
-int WriteReport(ScanResult result, string outputFormat, string? filePath)
+bool TryApplySuppressions(string? suppressionsPath, ref ScanResult result)
+{
+    if (suppressionsPath is null)
+        return true;
+
+    IReadOnlyList<Suppression> suppressions;
+    try
+    {
+        suppressions = SuppressionFileLoader.Load(suppressionsPath);
+    }
+    catch (Exception ex) when (ex is IOException or InvalidDataException)
+    {
+        Console.Error.WriteLine($"Failed to load suppressions '{suppressionsPath}': {ex.Message}");
+        return false;
+    }
+
+    var applied = SuppressionApplier.Apply(result, suppressions, DateTimeOffset.UtcNow);
+    result = applied.ScanResult;
+
+    if (applied.ExpiredSuppressions.Count > 0)
+    {
+        Console.WriteLine("WARNING: the following suppressions have expired and no longer apply:");
+        foreach (var expired in applied.ExpiredSuppressions)
+            Console.WriteLine($"  {expired.ControlId}/{expired.ObjectId}: expired {expired.Expires:yyyy-MM-dd} ({expired.Reason})");
+        Console.WriteLine();
+    }
+
+    return true;
+}
+
+int WriteReport(ScanResult result, string outputFormat, string? filePath, bool quiet, bool verbose)
 {
     switch (outputFormat)
     {
         case "console":
-            ConsoleReporter.Report(result, Console.Out);
+            ConsoleReporter.Report(result, Console.Out, quiet, verbose);
             return 0;
 
         case "json":
@@ -204,6 +253,9 @@ async Task<int> RunScanAsync(string[] rest)
     string? dumpPath = null;
     string outputFormat = "console";
     string? filePath = null;
+    string? suppressionsPath = null;
+    var quiet = false;
+    var verbose = false;
 
     for (var i = 0; i < remaining.Count; i++)
     {
@@ -232,13 +284,27 @@ async Task<int> RunScanAsync(string[] rest)
                 filePath = remaining[++i];
                 break;
 
+            case "--suppressions" when i + 1 < remaining.Count:
+                suppressionsPath = remaining[++i];
+                break;
+
+            case "--quiet":
+                quiet = true;
+                break;
+
+            case "--verbose":
+                verbose = true;
+                break;
+
             default:
                 Console.Error.WriteLine($"Unknown argument '{remaining[i]}'.");
                 return 2;
         }
     }
 
-    using var client = GraphHttpClient.Create(tenantId, clientId, secret);
+    using var client = GraphHttpClient.Create(
+        tenantId, clientId, secret,
+        verboseLogger: verbose ? line => Console.WriteLine($"[graph] {line}") : null);
     TenantSnapshot snapshot;
 
     try
@@ -261,13 +327,16 @@ async Task<int> RunScanAsync(string[] rest)
 
     var result = engine.Run(snapshot);
 
-    var writeExitCode = WriteReport(result, outputFormat, filePath);
+    if (!TryApplySuppressions(suppressionsPath, ref result))
+        return 2;
+
+    var writeExitCode = WriteReport(result, outputFormat, filePath, quiet, verbose);
     if (writeExitCode != 0)
         return writeExitCode;
 
     if (failOn is { } threshold)
     {
-        var hasBreach = result.AllFindings.Any(f => !f.IsExpectedException && f.Severity >= threshold);
+        var hasBreach = result.AllFindings.Any(f => !f.IsExpectedException && !f.IsSuppressed && f.Severity >= threshold);
         return hasBreach ? 1 : 0;
     }
 
@@ -353,11 +422,16 @@ void PrintUsage()
     Console.WriteLine("  aegis demo");
     Console.WriteLine("  aegis evaluate --from <snapshot.json> [--fail-on <Severity>]");
     Console.WriteLine("                 [--output console|json|csv] [--file <path>]");
+    Console.WriteLine("                 [--suppressions <suppressions.yaml>] [--quiet] [--verbose]");
     Console.WriteLine("  aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]");
     Console.WriteLine("  aegis scan --tenant-id <id> --client-id <id> [--secret <secret>]");
     Console.WriteLine("             [--fail-on <Severity>] [--dump <snapshot.json>]");
     Console.WriteLine("             [--output console|json|csv] [--file <path>]");
+    Console.WriteLine("             [--suppressions <suppressions.yaml>] [--quiet] [--verbose]");
     Console.WriteLine();
     Console.WriteLine("  The client secret can also be provided via the AEGIS_CLIENT_SECRET environment variable.");
     Console.WriteLine("  --output defaults to console. --output json and --output csv write the report to --file <path> instead of stdout.");
+    Console.WriteLine("  --suppressions loads documented finding exceptions from a YAML file (see docs/suppressions.md).");
+    Console.WriteLine("  --quiet reduces console output to the score and severity counts. --verbose adds per-control durations");
+    Console.WriteLine("  (and, for scan, each Graph HTTP call).");
 }

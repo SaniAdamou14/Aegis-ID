@@ -39,6 +39,11 @@ and reports. It modifies nothing, deletes nothing, creates nothing.
   <path>`. `--fail-on <Severity>` returns exit code `1` if a finding at or
   above that severity exists, `0` otherwise; exit code `2` is reserved for
   execution errors.
+- `--suppressions <file.yaml>` documents accepted exceptions for specific
+  findings without hiding them from the report — see `docs/suppressions.md`.
+- `--quiet` limits console output to the score and severity counts;
+  `--verbose` adds per-control durations (and, for `scan`, each Graph HTTP
+  call).
 
 See `Aegis-ID_Product_Backlog.md` for the full product backlog.
 

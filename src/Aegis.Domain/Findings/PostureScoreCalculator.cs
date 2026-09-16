@@ -3,7 +3,8 @@ namespace Aegis.Domain.Findings;
 /// <summary>
 /// Score = 100 minus the sum of per-finding severity penalties, floored at 0.
 /// Findings marked as an expected exception (e.g. a documented break-glass
-/// account) do not count against the score.
+/// account) or as suppressed (see <see cref="Suppression"/>) do not count
+/// against the score.
 /// </summary>
 public static class PostureScoreCalculator
 {
@@ -19,7 +20,7 @@ public static class PostureScoreCalculator
     public static int Calculate(IEnumerable<Finding> findings)
     {
         var penalty = findings
-            .Where(f => !f.IsExpectedException)
+            .Where(f => !f.IsExpectedException && !f.IsSuppressed)
             .Sum(f => Penalties[f.Severity]);
 
         return Math.Max(0, 100 - penalty);

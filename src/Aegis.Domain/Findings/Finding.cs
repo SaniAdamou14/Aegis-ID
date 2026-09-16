@@ -12,4 +12,8 @@ public sealed record Finding(
     string? CisReference,
     string? MitreTechnique,
     DateTimeOffset DetectedAt,
-    bool IsExpectedException = false);
+    bool IsExpectedException = false,
+    string? SuppressionReason = null)
+{
+    public bool IsSuppressed => SuppressionReason is not null;
+}

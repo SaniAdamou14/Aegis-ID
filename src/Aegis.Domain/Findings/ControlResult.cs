@@ -6,4 +6,5 @@ public sealed record ControlResult(
     ControlStatus Status,
     IReadOnlyList<Finding> Findings,
     string? SkipReason = null,
-    string? ErrorMessage = null);
+    string? ErrorMessage = null,
+    TimeSpan Duration = default);
