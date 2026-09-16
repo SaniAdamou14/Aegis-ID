@@ -1,0 +1,12 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [],
+  "applications": [],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z",
+  "authorizationPolicy": {
+    "userConsentForApps": "AllowForAny",
+    "usersCanRegisterApplications": false,
+    "guestInviteRestriction": "OnlyAdminsAndInviters"
+  }
+}

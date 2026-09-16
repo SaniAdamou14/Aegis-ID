@@ -13,6 +13,10 @@ public class ControlEngineTests
         [
             new AegisUser("u-1", "ga1@fixture.test", "GA 1", ["Global Administrator"], [AuthenticationMethodType.Fido2]),
             new AegisUser("u-2", "ga2@fixture.test", "GA 2", ["Global Administrator"], [AuthenticationMethodType.Fido2]),
+            new AegisUser(
+                "u-3", "breakglass@fixture.test", "Break Glass",
+                ["Global Administrator"], [AuthenticationMethodType.Fido2],
+                IsBreakGlassAccount: true),
         ],
         [],
         [
@@ -21,22 +25,20 @@ public class ControlEngineTests
                 "Block legacy auth",
                 ConditionalAccessPolicyState.Enabled,
                 ["exchangeActiveSync", "other"],
-                ["block"]),
+                ["block"],
+                ExcludedUserIds: ["u-3"]),
         ],
         DateTimeOffset.UtcNow);
 
     [Fact]
-    public void DiscoverFrom_FindsAllSprint1IamControls()
+    public void DiscoverFrom_FindsAllCatalogIamControls()
     {
         var engine = ControlEngine.DiscoverFrom(typeof(Aegis.Controls.Iam.PrivilegedAccountsWithoutStrongMfaControl).Assembly);
         var result = engine.Run(CompliantSnapshot());
 
         var ids = result.ControlResults.Select(r => r.ControlId).ToList();
-        Assert.Contains("IAM-001", ids);
-        Assert.Contains("IAM-003", ids);
-        Assert.Contains("IAM-005", ids);
-        Assert.Contains("IAM-006", ids);
-        Assert.Contains("IAM-009", ids);
+        for (var i = 1; i <= 15; i++)
+            Assert.Contains($"IAM-{i:000}", ids);
     }
 
     [Fact]

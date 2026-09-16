@@ -1,0 +1,15 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [],
+  "applications": [],
+  "conditionalAccessPolicies": [
+    {
+      "id": "ca-1",
+      "displayName": "Require MFA for admins",
+      "state": "Enabled",
+      "clientAppTypes": ["browser"],
+      "grantControls": ["mfa"]
+    }
+  ],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

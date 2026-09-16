@@ -1,0 +1,25 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [
+    {
+      "id": "u-1",
+      "userPrincipalName": "active@fixture.test",
+      "displayName": "Active User",
+      "assignedRoles": [],
+      "authenticationMethods": [],
+      "lastSignInDateTime": "2025-12-20T00:00:00Z"
+    },
+    {
+      "id": "u-2",
+      "userPrincipalName": "breakglass@fixture.test",
+      "displayName": "Break Glass",
+      "assignedRoles": [],
+      "authenticationMethods": [],
+      "isBreakGlassAccount": true,
+      "lastSignInDateTime": "2020-01-01T00:00:00Z"
+    }
+  ],
+  "applications": [],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

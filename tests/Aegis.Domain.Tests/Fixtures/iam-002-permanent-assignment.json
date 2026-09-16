@@ -1,0 +1,16 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [
+    {
+      "id": "u-1",
+      "userPrincipalName": "standing.admin@fixture.test",
+      "displayName": "Standing Admin",
+      "assignedRoles": ["Global Administrator"],
+      "authenticationMethods": ["Fido2"],
+      "permanentAssignmentRoles": ["Global Administrator"]
+    }
+  ],
+  "applications": [],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

@@ -1,0 +1,18 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [
+    { "id": "u-1", "userPrincipalName": "breakglass@fixture.test", "displayName": "Break Glass", "assignedRoles": [], "authenticationMethods": [], "isBreakGlassAccount": true }
+  ],
+  "applications": [],
+  "conditionalAccessPolicies": [
+    {
+      "id": "ca-1",
+      "displayName": "Require MFA for all",
+      "state": "Enabled",
+      "clientAppTypes": ["browser"],
+      "grantControls": ["mfa"],
+      "excludedUserIds": ["u-1"]
+    }
+  ],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}

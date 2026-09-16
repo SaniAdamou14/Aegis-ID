@@ -12,12 +12,12 @@ public class GraphTenantCollectorTests
         [$"{Base}organization?$select=id,displayName"] =
             """{ "value": [{ "id": "tenant-123", "displayName": "Fixture Tenant" }] }""",
 
-        [$"{Base}users?$select=id,userPrincipalName,displayName"] =
+        [$"{Base}users?$select=id,userPrincipalName,displayName,userType,signInActivity"] =
             """
             {
               "value": [
-                { "id": "u-1", "userPrincipalName": "alice@fixture.test", "displayName": "Alice" },
-                { "id": "u-2", "userPrincipalName": "bob@fixture.test", "displayName": "Bob" }
+                { "id": "u-1", "userPrincipalName": "alice@fixture.test", "displayName": "Alice", "userType": "Member", "signInActivity": { "lastSignInDateTime": "2026-01-01T00:00:00Z" } },
+                { "id": "u-2", "userPrincipalName": "bob@fixture.test", "displayName": "Bob", "userType": "Guest", "signInActivity": null }
               ]
             }
             """,
@@ -63,7 +63,7 @@ public class GraphTenantCollectorTests
             }
             """,
 
-        [$"{Base}servicePrincipals?$filter=servicePrincipalType eq 'Application'&$expand=appRoleAssignments&$select=appId,appRoleAssignments"] =
+        [$"{Base}servicePrincipals?$filter=servicePrincipalType eq 'Application'&$expand=appRoleAssignments&$select=appId,appRoleAssignments,signInActivity"] =
             """
             {
               "value": [
@@ -71,7 +71,8 @@ public class GraphTenantCollectorTests
                   "appId": "app-1",
                   "appRoleAssignments": [
                     { "resourceId": "graph-sp-id", "appRoleId": "role-directory-rw" }
-                  ]
+                  ],
+                  "signInActivity": { "lastSignInDateTime": "2025-01-01T00:00:00Z" }
                 }
               ]
             }
@@ -83,10 +84,24 @@ public class GraphTenantCollectorTests
               "value": [
                 {
                   "id": "ca-1", "displayName": "Block legacy auth", "state": "enabledForReportingButNotEnforced",
-                  "conditions": { "clientAppTypes": ["exchangeActiveSync", "other"] },
+                  "conditions": {
+                    "clientAppTypes": ["exchangeActiveSync", "other"],
+                    "users": { "excludeUsers": ["u-3"], "excludeGroups": ["g-1"] }
+                  },
                   "grantControls": { "builtInControls": ["block"] }
                 }
               ]
+            }
+            """,
+
+        [$"{Base}policies/authorizationPolicy"] =
+            """
+            {
+              "allowInvitesFrom": "everyone",
+              "defaultUserRolePermissions": {
+                "allowedToCreateApps": true,
+                "permissionGrantPoliciesAssigned": ["ManagePermissionGrantsForSelf.microsoft-user-default-legacy"]
+              }
             }
             """,
     };
@@ -120,11 +135,15 @@ public class GraphTenantCollectorTests
         var alice = snapshot.Users.Single(u => u.UserPrincipalName == "alice@fixture.test");
         Assert.Contains("Global Administrator", alice.AssignedRoles);
         Assert.Empty(alice.AuthenticationMethods);
+        Assert.Equal(AegisUserType.Member, alice.UserType);
+        Assert.Equal(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero), alice.LastSignInDateTime);
 
         var bob = snapshot.Users.Single(u => u.UserPrincipalName == "bob@fixture.test");
         Assert.Empty(bob.AssignedRoles);
         Assert.Contains(AuthenticationMethodType.Fido2, bob.AuthenticationMethods);
         Assert.Contains(AuthenticationMethodType.Sms, bob.AuthenticationMethods);
+        Assert.Equal(AegisUserType.Guest, bob.UserType);
+        Assert.Null(bob.LastSignInDateTime);
     }
 
     [Fact]
@@ -139,6 +158,7 @@ public class GraphTenantCollectorTests
         Assert.Single(app.Credentials);
         Assert.Null(app.Credentials[0].ExpiresOn);
         Assert.Contains("Directory.ReadWrite.All", app.GrantedGraphPermissions);
+        Assert.Equal(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero), app.LastSignInDateTime);
     }
 
     [Fact]
@@ -152,6 +172,31 @@ public class GraphTenantCollectorTests
         Assert.Equal(ConditionalAccessPolicyState.ReportOnly, policy.State);
         Assert.Contains("exchangeActiveSync", policy.ClientAppTypes);
         Assert.Contains("block", policy.GrantControls);
+        Assert.Contains("u-3", policy.ExcludedUserIds ?? []);
+        Assert.Contains("g-1", policy.ExcludedGroupIds ?? []);
+    }
+
+    [Fact]
+    public async Task CollectAsync_MapsAuthorizationPolicy()
+    {
+        var collector = CreateCollector(out _);
+
+        var snapshot = await collector.CollectAsync();
+
+        Assert.NotNull(snapshot.AuthorizationPolicy);
+        Assert.Equal(GuestInvitePolicy.Everyone, snapshot.AuthorizationPolicy.GuestInviteRestriction);
+        Assert.True(snapshot.AuthorizationPolicy.UsersCanRegisterApplications);
+        Assert.Equal(UserConsentPolicy.AllowForAny, snapshot.AuthorizationPolicy.UserConsentForApps);
+    }
+
+    [Theory]
+    [InlineData("none", GuestInvitePolicy.Nobody)]
+    [InlineData("adminsAndGuestInviters", GuestInvitePolicy.OnlyAdminsAndInviters)]
+    [InlineData("adminsGuestInvitersAndAllMembers", GuestInvitePolicy.AdminsInvitersAndMembers)]
+    [InlineData("everyone", GuestInvitePolicy.Everyone)]
+    public void MapGuestInviteRestriction_KnownValues_MapCorrectly(string raw, GuestInvitePolicy expected)
+    {
+        Assert.Equal(expected, GraphTenantCollector.MapGuestInviteRestriction(raw));
     }
 
     [Theory]

@@ -19,8 +19,9 @@ public sealed class GraphTenantCollector(GraphHttpClient client)
         var users = await CollectUsersAsync(cancellationToken);
         var applications = await CollectApplicationsAsync(cancellationToken);
         var policies = await CollectConditionalAccessPoliciesAsync(cancellationToken);
+        var authorizationPolicy = await CollectAuthorizationPolicyAsync(cancellationToken);
 
-        return new TenantSnapshot(tenantInfo, users, applications, policies, DateTimeOffset.UtcNow);
+        return new TenantSnapshot(tenantInfo, users, applications, policies, DateTimeOffset.UtcNow, authorizationPolicy);
     }
 
     private async Task<TenantInfo> CollectTenantInfoAsync(CancellationToken cancellationToken)
@@ -32,13 +33,19 @@ public sealed class GraphTenantCollector(GraphHttpClient client)
 
     private async Task<IReadOnlyList<AegisUser>> CollectUsersAsync(CancellationToken cancellationToken)
     {
-        var users = new Dictionary<string, (string Upn, string DisplayName)>();
+        var users = new Dictionary<string, (string Upn, string DisplayName, AegisUserType UserType, DateTimeOffset? LastSignIn)>();
 
-        await foreach (var u in client.GetAllPagesAsync("users?$select=id,userPrincipalName,displayName", cancellationToken))
+        await foreach (var u in client.GetAllPagesAsync(
+            "users?$select=id,userPrincipalName,displayName,userType,signInActivity", cancellationToken))
         {
             var id = u.GetProperty("id").GetString()!;
             var upn = u.GetProperty("userPrincipalName").GetString()!;
-            users[id] = (upn, u.GetStringOrNull("displayName") ?? upn);
+            var userType = u.GetStringOrNull("userType") == "Guest" ? AegisUserType.Guest : AegisUserType.Member;
+            var lastSignIn = u.TryGetProperty("signInActivity", out var activity) && activity.ValueKind != JsonValueKind.Null
+                ? activity.GetDateTimeOffsetOrNull("lastSignInDateTime")
+                : null;
+
+            users[id] = (upn, u.GetStringOrNull("displayName") ?? upn, userType, lastSignIn);
         }
 
         var rolesByUserId = await CollectDirectoryRoleAssignmentsAsync(users.Keys.ToHashSet(), cancellationToken);
@@ -46,11 +53,11 @@ public sealed class GraphTenantCollector(GraphHttpClient client)
 
         return users.Select(kv =>
         {
-            var (id, (upn, displayName)) = (kv.Key, kv.Value);
+            var (id, (upn, displayName, userType, lastSignIn)) = (kv.Key, kv.Value);
             rolesByUserId.TryGetValue(id, out var roles);
             methodsByUpn.TryGetValue(upn, out var methods);
 
-            return new AegisUser(id, upn, displayName, roles ?? [], methods ?? []);
+            return new AegisUser(id, upn, displayName, roles ?? [], methods ?? [], UserType: userType, LastSignInDateTime: lastSignIn);
         }).ToList();
     }
 
@@ -150,9 +157,10 @@ public sealed class GraphTenantCollector(GraphHttpClient client)
         var graphSpId = graphSp?.GetStringOrNull("id");
 
         var permissionsByAppId = new Dictionary<string, List<string>>();
+        var lastSignInByAppId = new Dictionary<string, DateTimeOffset?>();
 
         await foreach (var sp in client.GetAllPagesAsync(
-            "servicePrincipals?$filter=servicePrincipalType eq 'Application'&$expand=appRoleAssignments&$select=appId,appRoleAssignments",
+            "servicePrincipals?$filter=servicePrincipalType eq 'Application'&$expand=appRoleAssignments&$select=appId,appRoleAssignments,signInActivity",
             cancellationToken))
         {
             var appId = sp.GetStringOrNull("appId");
@@ -174,12 +182,16 @@ public sealed class GraphTenantCollector(GraphHttpClient client)
             }
 
             permissionsByAppId[appId] = granted;
+            lastSignInByAppId[appId] = sp.TryGetProperty("signInActivity", out var activity) && activity.ValueKind != JsonValueKind.Null
+                ? activity.GetDateTimeOffsetOrNull("lastSignInDateTime")
+                : null;
         }
 
         return apps.Select(kv =>
         {
             permissionsByAppId.TryGetValue(kv.Key, out var permissions);
-            return new AegisApplication(kv.Key, kv.Value.DisplayName, kv.Value.Credentials, permissions ?? []);
+            lastSignInByAppId.TryGetValue(kv.Key, out var lastSignIn);
+            return new AegisApplication(kv.Key, kv.Value.DisplayName, kv.Value.Credentials, permissions ?? [], lastSignIn);
         }).ToList();
     }
 
@@ -194,17 +206,56 @@ public sealed class GraphTenantCollector(GraphHttpClient client)
             var grantControls = p.TryGetProperty("grantControls", out var gc) && gc.ValueKind != JsonValueKind.Null
                 ? gc
                 : (JsonElement?)null;
+            var users = conditions.TryGetProperty("users", out var u) && u.ValueKind != JsonValueKind.Null
+                ? u
+                : (JsonElement?)null;
 
             policies.Add(new ConditionalAccessPolicy(
                 p.GetProperty("id").GetString()!,
                 p.GetProperty("displayName").GetString()!,
                 MapState(p.GetProperty("state").GetString()!),
                 conditions.GetStringArray("clientAppTypes"),
-                grantControls?.GetStringArray("builtInControls") ?? []));
+                grantControls?.GetStringArray("builtInControls") ?? [],
+                users?.GetStringArray("excludeUsers") ?? [],
+                users?.GetStringArray("excludeGroups") ?? []));
         }
 
         return policies;
     }
+
+    private async Task<TenantAuthorizationPolicy?> CollectAuthorizationPolicyAsync(CancellationToken cancellationToken)
+    {
+        using var doc = await client.GetJsonAsync("policies/authorizationPolicy", cancellationToken);
+        var root = doc.RootElement;
+
+        var usersCanRegisterApplications = root.TryGetProperty("defaultUserRolePermissions", out var defaultPerms)
+            && defaultPerms.ValueKind != JsonValueKind.Null
+            && defaultPerms.TryGetProperty("allowedToCreateApps", out var allowedToCreateApps)
+            && allowedToCreateApps.ValueKind == JsonValueKind.True;
+
+        var grantPolicies = defaultPerms.ValueKind != JsonValueKind.Undefined
+            ? defaultPerms.GetStringArray("permissionGrantPoliciesAssigned")
+            : [];
+
+        var userConsentForApps = grantPolicies.Count == 0
+            ? UserConsentPolicy.Disabled
+            : grantPolicies.Any(p => p.Contains("low-risk", StringComparison.OrdinalIgnoreCase))
+                ? UserConsentPolicy.AllowForVerifiedPublishersLowRisk
+                : UserConsentPolicy.AllowForAny;
+
+        var guestInviteRestriction = MapGuestInviteRestriction(root.GetStringOrNull("allowInvitesFrom"));
+
+        return new TenantAuthorizationPolicy(userConsentForApps, usersCanRegisterApplications, guestInviteRestriction);
+    }
+
+    internal static GuestInvitePolicy MapGuestInviteRestriction(string? allowInvitesFrom) => allowInvitesFrom switch
+    {
+        "none" => GuestInvitePolicy.Nobody,
+        "adminsAndGuestInviters" => GuestInvitePolicy.OnlyAdminsAndInviters,
+        "adminsGuestInvitersAndAllMembers" => GuestInvitePolicy.AdminsInvitersAndMembers,
+        "everyone" => GuestInvitePolicy.Everyone,
+        _ => GuestInvitePolicy.AdminsInvitersAndMembers,
+    };
 
     internal static ConditionalAccessPolicyState MapState(string state) => state switch
     {

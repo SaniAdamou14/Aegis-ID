@@ -5,4 +5,5 @@ public sealed record TenantSnapshot(
     IReadOnlyList<AegisUser> Users,
     IReadOnlyList<AegisApplication> Applications,
     IReadOnlyList<ConditionalAccessPolicy> ConditionalAccessPolicies,
-    DateTimeOffset CollectedAt);
+    DateTimeOffset CollectedAt,
+    TenantAuthorizationPolicy? AuthorizationPolicy = null);

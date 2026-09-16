@@ -15,7 +15,7 @@ and reports. It modifies nothing, deletes nothing, creates nothing.
 ## Current state
 
 - Domain model (`TenantSnapshot`, `Finding`, control engine, scoring) — in progress.
-- Controls implemented so far: IAM-001, IAM-003, IAM-005, IAM-006, IAM-009.
+- All 15 v1 IAM controls implemented: IAM-001 through IAM-015.
 - CLI, offline (no network, no tenant needed):
   - `aegis demo` — synthetic embedded snapshot.
   - `aegis evaluate --from <snapshot.json> [--fail-on <Severity>]`

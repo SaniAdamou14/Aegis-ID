@@ -9,21 +9,26 @@
       "userPrincipalName": "alice.admin@demo.aegis-id.dev",
       "displayName": "Alice Admin",
       "assignedRoles": ["Global Administrator"],
-      "authenticationMethods": []
+      "authenticationMethods": [],
+      "lastSignInDateTime": "2026-09-14T00:00:00Z",
+      "permanentAssignmentRoles": ["Global Administrator"]
     },
     {
       "id": "u-002",
       "userPrincipalName": "bob.admin@demo.aegis-id.dev",
       "displayName": "Bob Admin",
       "assignedRoles": ["Global Administrator"],
-      "authenticationMethods": ["Sms"]
+      "authenticationMethods": ["Sms"],
+      "lastSignInDateTime": "2026-09-12T00:00:00Z",
+      "permanentAssignmentRoles": ["Global Administrator"]
     },
     {
       "id": "u-003",
       "userPrincipalName": "carol.security@demo.aegis-id.dev",
       "displayName": "Carol Security",
       "assignedRoles": ["Security Administrator"],
-      "authenticationMethods": ["Fido2"]
+      "authenticationMethods": ["Fido2"],
+      "lastSignInDateTime": "2026-09-15T00:00:00Z"
     },
     {
       "id": "u-004",
@@ -38,21 +43,33 @@
       "userPrincipalName": "dave.admin@demo.aegis-id.dev",
       "displayName": "Dave Admin",
       "assignedRoles": ["Global Administrator"],
-      "authenticationMethods": ["WindowsHelloForBusiness"]
+      "authenticationMethods": ["WindowsHelloForBusiness"],
+      "lastSignInDateTime": "2026-09-13T00:00:00Z"
     },
     {
       "id": "u-006",
       "userPrincipalName": "erin.admin@demo.aegis-id.dev",
       "displayName": "Erin Admin",
       "assignedRoles": ["Global Administrator"],
-      "authenticationMethods": ["MicrosoftAuthenticator"]
+      "authenticationMethods": ["MicrosoftAuthenticator"],
+      "lastSignInDateTime": "2026-09-11T00:00:00Z"
     },
     {
       "id": "u-007",
       "userPrincipalName": "frank.user@demo.aegis-id.dev",
       "displayName": "Frank User",
       "assignedRoles": [],
-      "authenticationMethods": ["MicrosoftAuthenticator"]
+      "authenticationMethods": ["MicrosoftAuthenticator"],
+      "lastSignInDateTime": "2024-05-01T00:00:00Z"
+    },
+    {
+      "id": "u-008",
+      "userPrincipalName": "guest.consultant@partner.example",
+      "displayName": "Guest Consultant",
+      "assignedRoles": ["Helpdesk Administrator"],
+      "authenticationMethods": ["MicrosoftAuthenticator"],
+      "lastSignInDateTime": "2026-09-14T00:00:00Z",
+      "userType": "Guest"
     }
   ],
   "applications": [
@@ -62,7 +79,8 @@
       "credentials": [
         { "type": "Secret", "expiresOn": "2026-08-05T00:00:00Z" }
       ],
-      "grantedGraphPermissions": ["User.Read"]
+      "grantedGraphPermissions": ["User.Read"],
+      "lastSignInDateTime": "2026-09-15T00:00:00Z"
     },
     {
       "id": "app-002",
@@ -78,7 +96,8 @@
       "credentials": [
         { "type": "Certificate", "expiresOn": "2031-01-01T00:00:00Z" }
       ],
-      "grantedGraphPermissions": ["Reports.Read.All"]
+      "grantedGraphPermissions": ["Reports.Read.All"],
+      "lastSignInDateTime": "2024-01-01T00:00:00Z"
     }
   ],
   "conditionalAccessPolicies": [
@@ -95,7 +114,20 @@
       "state": "ReportOnly",
       "clientAppTypes": ["exchangeActiveSync", "other"],
       "grantControls": ["block"]
+    },
+    {
+      "id": "ca-003",
+      "displayName": "Pilot program exclusion",
+      "state": "Enabled",
+      "clientAppTypes": ["browser"],
+      "grantControls": ["mfa"],
+      "excludedUserIds": ["u-007"]
     }
   ],
-  "collectedAt": "2026-07-24T00:00:00Z"
+  "collectedAt": "2026-09-16T00:00:00Z",
+  "authorizationPolicy": {
+    "userConsentForApps": "AllowForAny",
+    "usersCanRegisterApplications": true,
+    "guestInviteRestriction": "Everyone"
+  }
 }

@@ -1,0 +1,21 @@
+{
+  "tenantInfo": { "tenantId": "tenant-1", "displayName": "Fixture Tenant" },
+  "users": [],
+  "applications": [
+    {
+      "id": "app-1",
+      "displayName": "Active-App",
+      "credentials": [],
+      "grantedGraphPermissions": [],
+      "lastSignInDateTime": "2025-12-20T00:00:00Z"
+    },
+    {
+      "id": "app-2",
+      "displayName": "Never-Reported-App",
+      "credentials": [],
+      "grantedGraphPermissions": []
+    }
+  ],
+  "conditionalAccessPolicies": [],
+  "collectedAt": "2026-01-01T00:00:00Z"
+}
