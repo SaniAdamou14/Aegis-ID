@@ -35,6 +35,8 @@ int RunEvaluate(string[] rest)
 {
     string? fromPath = null;
     Severity? failOn = null;
+    string outputFormat = "console";
+    string? filePath = null;
 
     for (var i = 0; i < rest.Length; i++)
     {
@@ -53,6 +55,14 @@ int RunEvaluate(string[] rest)
                 }
                 failOn = parsed;
                 i++;
+                break;
+
+            case "--output" when i + 1 < rest.Length:
+                outputFormat = rest[++i].ToLowerInvariant();
+                break;
+
+            case "--file" when i + 1 < rest.Length:
+                filePath = rest[++i];
                 break;
 
             default:
@@ -79,7 +89,10 @@ int RunEvaluate(string[] rest)
     }
 
     var result = engine.Run(snapshot);
-    ConsoleReporter.Report(result, Console.Out);
+
+    var writeExitCode = WriteReport(result, outputFormat, filePath);
+    if (writeExitCode != 0)
+        return writeExitCode;
 
     if (failOn is { } threshold)
     {
@@ -88,6 +101,38 @@ int RunEvaluate(string[] rest)
     }
 
     return 0;
+}
+
+int WriteReport(ScanResult result, string outputFormat, string? filePath)
+{
+    switch (outputFormat)
+    {
+        case "console":
+            ConsoleReporter.Report(result, Console.Out);
+            return 0;
+
+        case "json":
+            if (filePath is null)
+            {
+                Console.Error.WriteLine("--output json requires --file <path>.");
+                return 2;
+            }
+            File.WriteAllText(filePath, JsonReporter.Serialize(result));
+            return 0;
+
+        case "csv":
+            if (filePath is null)
+            {
+                Console.Error.WriteLine("--output csv requires --file <path>.");
+                return 2;
+            }
+            File.WriteAllText(filePath, CsvReporter.Serialize(result));
+            return 0;
+
+        default:
+            Console.Error.WriteLine($"Unknown --output value '{outputFormat}'. Expected one of: console, json, csv.");
+            return 2;
+    }
 }
 
 async Task<int> RunDoctorAsync(string[] rest)
@@ -157,6 +202,8 @@ async Task<int> RunScanAsync(string[] rest)
 
     Severity? failOn = null;
     string? dumpPath = null;
+    string outputFormat = "console";
+    string? filePath = null;
 
     for (var i = 0; i < remaining.Count; i++)
     {
@@ -175,6 +222,14 @@ async Task<int> RunScanAsync(string[] rest)
 
             case "--dump" when i + 1 < remaining.Count:
                 dumpPath = remaining[++i];
+                break;
+
+            case "--output" when i + 1 < remaining.Count:
+                outputFormat = remaining[++i].ToLowerInvariant();
+                break;
+
+            case "--file" when i + 1 < remaining.Count:
+                filePath = remaining[++i];
                 break;
 
             default:
@@ -205,7 +260,10 @@ async Task<int> RunScanAsync(string[] rest)
         File.WriteAllText(dumpPath, TenantSnapshotSerializer.Serialize(snapshot));
 
     var result = engine.Run(snapshot);
-    ConsoleReporter.Report(result, Console.Out);
+
+    var writeExitCode = WriteReport(result, outputFormat, filePath);
+    if (writeExitCode != 0)
+        return writeExitCode;
 
     if (failOn is { } threshold)
     {
@@ -294,9 +352,12 @@ void PrintUsage()
     Console.WriteLine("Usage:");
     Console.WriteLine("  aegis demo");
     Console.WriteLine("  aegis evaluate --from <snapshot.json> [--fail-on <Severity>]");
+    Console.WriteLine("                 [--output console|json|csv] [--file <path>]");
     Console.WriteLine("  aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]");
     Console.WriteLine("  aegis scan --tenant-id <id> --client-id <id> [--secret <secret>]");
     Console.WriteLine("             [--fail-on <Severity>] [--dump <snapshot.json>]");
+    Console.WriteLine("             [--output console|json|csv] [--file <path>]");
     Console.WriteLine();
     Console.WriteLine("  The client secret can also be provided via the AEGIS_CLIENT_SECRET environment variable.");
+    Console.WriteLine("  --output defaults to console. --output json and --output csv write the report to --file <path> instead of stdout.");
 }

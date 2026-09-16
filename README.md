@@ -18,13 +18,15 @@ and reports. It modifies nothing, deletes nothing, creates nothing.
 - All 15 v1 IAM controls implemented: IAM-001 through IAM-015.
 - CLI, offline (no network, no tenant needed):
   - `aegis demo` — synthetic embedded snapshot.
-  - `aegis evaluate --from <snapshot.json> [--fail-on <Severity>]`
+  - `aegis evaluate --from <snapshot.json> [--fail-on <Severity>]
+    [--output console|json|csv] [--file <path>]`
 - CLI, live Microsoft Graph (client credentials flow, US-001/003/004):
   - `aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]` —
     reports which of the six required read-only permissions are granted,
     and warns if a write scope was granted by mistake.
   - `aegis scan --tenant-id <id> --client-id <id> [--secret <secret>]
-    [--fail-on <Severity>] [--dump <snapshot.json>]` — collects a live
+    [--fail-on <Severity>] [--dump <snapshot.json>]
+    [--output console|json|csv] [--file <path>]` — collects a live
     tenant snapshot (paginated, retries on 429/5xx with backoff + jitter)
     and evaluates it with the same engine as `evaluate`.
   - The live collection layer (`src/Aegis.Graph`) is unit-tested against
@@ -32,6 +34,11 @@ and reports. It modifies nothing, deletes nothing, creates nothing.
     against a real tenant — see `docs/dev-tenant-setup.md`.
   - Client secret: `--secret`, or the `AEGIS_CLIENT_SECRET` environment
     variable. Never logged, never printed.
+- `--output json` writes a versioned JSON report (see `docs/report-schema.md`)
+  and `--output csv` writes one row per finding — both require `--file
+  <path>`. `--fail-on <Severity>` returns exit code `1` if a finding at or
+  above that severity exists, `0` otherwise; exit code `2` is reserved for
+  execution errors.
 
 See `Aegis-ID_Product_Backlog.md` for the full product backlog.
 
