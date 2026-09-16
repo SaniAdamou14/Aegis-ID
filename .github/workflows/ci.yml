@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore AegisId.sln
+
+      - name: Build (warnings as errors)
+        run: dotnet build AegisId.sln --no-restore --configuration Release -warnaserror
+
+      - name: Verify formatting
+        run: dotnet format AegisId.sln --verify-no-changes --no-restore
+
+      - name: Test
+        run: >
+          dotnet test AegisId.sln --no-build --configuration Release
+          --collect:"XPlat Code Coverage" --results-directory ./coverage
+          --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results and coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            coverage/**
+            **/*.trx
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

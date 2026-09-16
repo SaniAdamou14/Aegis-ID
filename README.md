@@ -1,5 +1,7 @@
 # Aegis-ID
 
+[![CI](https://github.com/SaniAdamou14/Aegis-ID/actions/workflows/ci.yml/badge.svg)](https://github.com/SaniAdamou14/Aegis-ID/actions/workflows/ci.yml)
+
 **Read-only security posture auditor for Microsoft Entra ID tenants.**
 
 > Status: early scaffold. This README is a placeholder — the full version
@@ -46,6 +48,22 @@ and reports. It modifies nothing, deletes nothing, creates nothing.
   call).
 
 See `Aegis-ID_Product_Backlog.md` for the full product backlog.
+
+## Continuous integration & releases
+
+Every push and pull request runs `.github/workflows/ci.yml`: restore, build
+with warnings as errors, `dotnet format --verify-no-changes`, the full test
+suite, and a [gitleaks](https://github.com/gitleaks/gitleaks) secret scan.
+A tagged push (`vX.Y.Z`) runs `.github/workflows/release.yml`, which
+publishes self-contained single-file binaries for Linux, Windows, and macOS
+to the GitHub release, and a container image to
+`ghcr.io/saniadamou14/aegis-id`.
+
+Known gaps: there is no coverage badge yet — that needs a third-party
+coverage service (e.g. Codecov) wired to an account, not just a workflow
+file. Branch protection (failing CI blocking merge) must be turned on once
+in the repository's GitHub settings — it isn't something a workflow file can
+set.
 
 ## Development
 

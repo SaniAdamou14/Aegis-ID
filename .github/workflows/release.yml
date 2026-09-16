@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  binaries:
+    strategy:
+      matrix:
+        rid: [linux-x64, win-x64, osx-x64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Publish ${{ matrix.rid }}
+        run: >
+          dotnet publish src/Aegis.Cli/Aegis.Cli.csproj -c Release -r ${{ matrix.rid }}
+          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -o out/${{ matrix.rid }}
+
+      - name: Package archive
+        run: tar -czf aegis-${{ github.ref_name }}-${{ matrix.rid }}.tar.gz -C out/${{ matrix.rid }} .
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: aegis-${{ matrix.rid }}
+          path: aegis-${{ github.ref_name }}-${{ matrix.rid }}.tar.gz
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/aegis-id:${{ github.ref_name }}
+
+  publish-release:
+    needs: [binaries, container]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*.tar.gz
+          generate_release_notes: true
