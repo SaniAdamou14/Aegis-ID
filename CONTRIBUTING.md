@@ -2,14 +2,22 @@
 
 ## Setup
 
-Prerequisite: [.NET 8 SDK](https://dotnet.microsoft.com/download) (pinned
-version in `global.json`).
+Prerequisites: [.NET 8 SDK](https://dotnet.microsoft.com/download) (pinned
+version in `global.json`) and Node 18.19+ (for the Angular dashboard).
 
 ```bash
 git clone https://github.com/SaniAdamou14/Aegis-ID.git
 cd Aegis-ID
 dotnet build AegisId.sln
 dotnet test
+```
+
+For the dashboard (`Aegis.Api` + Angular, see the root README's
+[Dashboard](README.md#dashboard) section):
+
+```bash
+npm install
+npm run dev   # starts Aegis.Api and the Angular dev server together
 ```
 
 ## Workflow
@@ -25,6 +33,16 @@ dotnet format AegisId.sln --verify-no-changes
 dotnet test AegisId.sln
 git push -u origin feature/my-change
 gh pr create
+```
+
+CI also runs a `dashboard` job (`ng build` + `ng test` in `web/`) — not
+yet a required status check, but changes there should still pass it
+locally before pushing:
+
+```bash
+cd web
+npx ng build
+npx ng test --no-watch --browsers=ChromeHeadless
 ```
 
 ## Adding a control

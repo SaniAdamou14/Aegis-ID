@@ -1,0 +1,11 @@
+{
+  "name": "aegis-id-dev",
+  "private": true,
+  "description": "Root dev orchestration only — not a published package. The real projects are src/Aegis.Api (ASP.NET Core) and web/ (Angular), which stay independently deployable; this just starts both together for local development.",
+  "scripts": {
+    "dev": "concurrently -n api,dashboard -c blue,green \"dotnet run --project src/Aegis.Api\" \"npm --prefix web start\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

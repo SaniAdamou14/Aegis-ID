@@ -100,6 +100,9 @@ flowchart LR
     RESULT --> CONSOLE[Console reporter]
     RESULT --> JSONR[JSON report]
     RESULT --> CSVR[CSV report]
+    RESULT --> PDFR[PDF report]
+    RESULT -->|"--db"| HISTORY["Aegis.Persistence<br/>SQLite history"]
+    HISTORY -->|"aegis diff"| DIFF[Appeared / resolved / unchanged]
     SUPPRESS["aegis-suppressions.yaml"] -.->|excludes documented exceptions| RESULT
 ```
 
@@ -122,14 +125,23 @@ reflection, no registration step.
 An Angular dashboard (posture overview, filterable/paginated findings list
 with a detail panel — E6 of the backlog) reads from `Aegis.Api`.
 
-```bash
-# terminal 1
-dotnet run --project src/Aegis.Api
+`Aegis.Api` and `web/` are two independent projects — each is deployable on
+its own (the API elsewhere, the dashboard on a static host), the same split
+`docker-compose.yml` uses. That means starting the API alone doesn't start
+the dashboard too; the root `package.json` gives you both with one command
+for local dev:
 
-# terminal 2
-cd web
-npm install
-npm start
+```bash
+npm install   # once
+npm run dev   # starts Aegis.Api and the Angular dev server together
+```
+
+Or run them separately, in two terminals, if you only need one:
+
+```bash
+dotnet run --project src/Aegis.Api
+# or
+cd web && npm install && npm start
 ```
 
 Then open <http://localhost:4200>. Filters and the selected finding are
@@ -142,8 +154,11 @@ recorded with `aegis evaluate/scan --db` — set `Persistence:DbPath` in
 variable) to that same SQLite file so the API can read it. See
 `docs/history.md`.
 
-`docker compose up` builds and runs both the API and the dashboard (behind
-an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
+`docker compose up` builds and runs both: the API on
+<http://localhost:5092>, the dashboard on <http://localhost:8081> (behind
+an nginx reverse proxy for `/api`, so it isn't 4200 — that avoids colliding
+with the Angular dev server if both happen to run at once) — see
+`docker-compose.yml`.
 
 ## Known limitations
 

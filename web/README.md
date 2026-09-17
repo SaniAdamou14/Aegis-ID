@@ -1,59 +1,31 @@
-# Dashboard
+# Aegis-ID dashboard
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.9.
+The Angular 19 dashboard for [Aegis-ID](../README.md) — posture overview,
+filterable findings list, finding detail panel, score-over-time chart.
+Talks to `Aegis.Api` over HTTP; see the root README's
+[Dashboard](../README.md#dashboard) section for how to run both together.
+
+Generated with [Angular CLI](https://github.com/angular/angular-cli) 19.2.9.
 
 ## Development server
 
-To start a local development server, run:
-
 ```bash
-ng serve
+npm start   # equivalent to `ng serve` — http://localhost:4200
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Requires `Aegis.Api` running separately (`dotnet run --project ../src/Aegis.Api`)
+unless you use the root `npm run dev`, which starts both.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Build
 
 ```bash
-ng generate --help
+npm run build   # equivalent to `ng build` — output in dist/dashboard/browser
 ```
 
-## Building
-
-To build the project run:
+## Tests
 
 ```bash
-ng build
+npx ng test --no-watch --browsers=ChromeHeadless
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+No end-to-end test framework is set up — `ng e2e` isn't available here.
