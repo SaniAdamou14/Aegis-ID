@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/Aegis.Api/Dockerfile
+    ports:
+      - "5092:8080"
+
+  dashboard:
+    build:
+      context: web
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+    depends_on:
+      - api

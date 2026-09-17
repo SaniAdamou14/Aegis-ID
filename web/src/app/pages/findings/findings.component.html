@@ -1,0 +1,102 @@
+@if (loading()) {
+  <p class="status-message" role="status">Loading findings…</p>
+} @else if (error()) {
+  <div class="status-message status-message--error" role="alert">
+    <p>{{ error() }}</p>
+  </div>
+} @else {
+  <h1>Findings</h1>
+
+  <form class="filters" role="search" (submit)="$event.preventDefault()">
+    <div class="filter-field">
+      <label for="filter-severity">Severity</label>
+      <select id="filter-severity" (change)="onSeverityChange($any($event.target).value)">
+        <option value="" [selected]="!severityFilter()">All</option>
+        @for (severity of severityOrder; track severity) {
+          <option [value]="severity" [selected]="severity === severityFilter()">{{ severityLabel[severity] }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="filter-control">Control</label>
+      <select id="filter-control" (change)="onControlChange($any($event.target).value)">
+        <option value="" [selected]="!controlFilter()">All</option>
+        @for (control of availableControls(); track control) {
+          <option [value]="control" [selected]="control === controlFilter()">{{ control }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="filter-object-type">Object type</label>
+      <select id="filter-object-type" (change)="onObjectTypeChange($any($event.target).value)">
+        <option value="" [selected]="!objectTypeFilter()">All</option>
+        @for (objectType of availableObjectTypes(); track objectType) {
+          <option [value]="objectType" [selected]="objectType === objectTypeFilter()">{{ objectType }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-field filter-field--grow">
+      <label for="filter-search">Search object name</label>
+      <input
+        id="filter-search"
+        type="search"
+        [value]="searchQuery()"
+        (input)="onSearchInput($any($event.target).value)"
+        placeholder="e.g. alice.admin@…"
+      />
+    </div>
+
+    @if (hasActiveFilters()) {
+      <button type="button" class="filters__clear" (click)="clearFilters()">Clear filters</button>
+    }
+  </form>
+
+  <p class="result-count" aria-live="polite">
+    {{ filteredFindings().length }} finding{{ filteredFindings().length === 1 ? '' : 's' }}
+  </p>
+
+  @if (pagedFindings().length === 0) {
+    <p class="status-message">No findings match these filters.</p>
+  } @else {
+    <table class="findings-table">
+      <caption class="visually-hidden">Findings matching the current filters</caption>
+      <thead>
+        <tr>
+          <th scope="col">Severity</th>
+          <th scope="col">Control</th>
+          <th scope="col">Object</th>
+          <th scope="col">Evidence</th>
+          <th scope="col"><span class="visually-hidden">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (finding of pagedFindings(); track finding.id) {
+          <tr>
+            <td><app-severity-badge [severity]="finding.severity" /></td>
+            <td>{{ finding.controlId }}</td>
+            <td>{{ finding.objectType }} — {{ finding.objectName }}</td>
+            <td class="findings-table__evidence">{{ finding.evidence }}</td>
+            <td>
+              <button type="button" (click)="select(finding)">Details</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (totalPages() > 1) {
+      <nav class="pagination" aria-label="Findings pages">
+        <button type="button" [disabled]="page() <= 1" (click)="goToPage(page() - 1)">Previous</button>
+        <span aria-live="polite">Page {{ page() }} of {{ totalPages() }}</span>
+        <button type="button" [disabled]="page() >= totalPages()" (click)="goToPage(page() + 1)">Next</button>
+      </nav>
+    }
+  }
+
+  @if (selectedFinding(); as finding) {
+    <app-finding-detail [finding]="finding" (close)="closeDetail()" />
+  }
+}

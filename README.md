@@ -109,10 +109,34 @@ flowchart LR
 | `Aegis.Controls` | The 15 `IControl` implementations (business rules). | `Aegis.Domain` |
 | `Aegis.Graph` | Live Microsoft Graph collection: auth, pagination, retry/backoff, permission check. | `Aegis.Domain` |
 | `Aegis.Cli` | Commands (`demo`, `evaluate`, `doctor`, `scan`), console/JSON/CSV reporters, suppressions. | all of the above |
+| `Aegis.Api` | Minimal ASP.NET Core API serving scan results as JSON to the dashboard. | `Aegis.Domain`, `Aegis.Controls` |
+| `web/` | Angular 19 dashboard (standalone components, signals). | `Aegis.Api` (HTTP) |
 
 A control is a class implementing `IControl` — dropping a new one into
 `Aegis.Controls` is enough; `ControlEngine.DiscoverFrom` finds it by
 reflection, no registration step.
+
+## Dashboard
+
+An Angular dashboard (posture overview, filterable/paginated findings list
+with a detail panel — E6 of the backlog) reads from `Aegis.Api`.
+
+```bash
+# terminal 1
+dotnet run --project src/Aegis.Api
+
+# terminal 2
+cd web
+npm install
+npm start
+```
+
+Then open <http://localhost:4200>. Filters and the selected finding are
+reflected in the URL, so a filtered view is shareable and survives a
+reload. Severity is always shown as text, never color alone.
+
+`docker compose up` builds and runs both the API and the dashboard (behind
+an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
 
 ## Known limitations
 
@@ -130,8 +154,11 @@ reflection, no registration step.
   is always `false` from a live scan today. A config file to let operators
   mark known break-glass UPNs is a natural follow-up (tracked informally,
   not yet a user story).
-- **No Angular dashboard, history, or scan comparison yet** (Sprint 3/E7 of
-  the backlog) — today Aegis-ID is CLI-only.
+- **The dashboard only shows the demo scan today.** `Aegis.Api` serves the
+  embedded demo tenant and accepts a posted snapshot for offline evaluation,
+  but there is no persistence, scan history, or scan-to-scan comparison yet
+  (E7 of the backlog) — a live `aegis scan` result isn't wired into the
+  dashboard yet either.
 - **No coverage badge** — needs a third-party coverage service account, a
   purely CI-tooling gap unrelated to the product itself.
 - Out of scope for v1 by design (not limitations, decisions — see
