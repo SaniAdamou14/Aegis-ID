@@ -30,7 +30,7 @@ public sealed class GuestAccountWithDirectoryRoleControl : IControl
                 ObjectId: user.Id,
                 ObjectName: user.UserPrincipalName,
                 Evidence: $"Guest account holds role(s): {string.Join(", ", user.AssignedRoles)}.",
-                RiskDescription: "A guest account with a directory role is managed outside this tenant's identity lifecycle — its compromise in the home tenant directly compromises this one.",
+                RiskDescription: "A guest account with a directory role is managed outside this tenant's identity lifecycle - its compromise in the home tenant directly compromises this one.",
                 Remediation:
                 [
                     "Remove the directory role from the guest account.",

@@ -1,12 +1,12 @@
 @if (entries().length < 2) {
   <p class="empty-state">
-    Not enough history yet — run <code>aegis evaluate --db &lt;path&gt;</code> or
+    Not enough history yet - run <code>aegis evaluate --db &lt;path&gt;</code> or
     <code>aegis scan --db &lt;path&gt;</code> at least twice to see a trend.
   </p>
 } @else {
   <p class="chart-readout" aria-live="polite">
     @if (hoveredPoint(); as hp) {
-      {{ hp.entry.evaluatedAt | date: 'medium' }} — score {{ hp.entry.postureScore }}/100
+      {{ hp.entry.evaluatedAt | date: 'medium' }} - score {{ hp.entry.postureScore }}/100
     } @else {
       Hover or focus a point for its date and score.
     }

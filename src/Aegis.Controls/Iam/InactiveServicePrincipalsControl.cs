@@ -42,7 +42,7 @@ public sealed class InactiveServicePrincipalsControl : IControl
                 ObjectId: app.Id,
                 ObjectName: app.DisplayName,
                 Evidence: $"Service principal last signed in on {lastSignIn:yyyy-MM-dd}.",
-                RiskDescription: "An inactive service principal that still holds Graph permissions or credentials is unnecessary attack surface — its access is never used but remains exploitable if its credentials leak.",
+                RiskDescription: "An inactive service principal that still holds Graph permissions or credentials is unnecessary attack surface - its access is never used but remains exploitable if its credentials leak.",
                 Remediation:
                 [
                     "Confirm whether the application is still in use.",
