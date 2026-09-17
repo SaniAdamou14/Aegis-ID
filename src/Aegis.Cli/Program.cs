@@ -214,7 +214,7 @@ int WriteReport(ScanResult result, string outputFormat, string? filePath, bool q
 
 async Task<int> RunDoctorAsync(string[] rest)
 {
-    if (!TryParseCredentialArgs(rest, out var tenantId, out var clientId, out var secret, out var remaining, out var credentialError))
+    if (!TryParseCredentialArgs(rest, requireSecret: true, out var tenantId, out var clientId, out var secret, out var remaining, out var credentialError))
     {
         Console.Error.WriteLine(credentialError);
         return 2;
@@ -226,7 +226,7 @@ async Task<int> RunDoctorAsync(string[] rest)
         return 2;
     }
 
-    using var client = GraphHttpClient.Create(tenantId, clientId, secret);
+    using var client = GraphHttpClient.Create(tenantId, clientId, secret!);
     DoctorReport report;
 
     try
@@ -271,7 +271,9 @@ async Task<int> RunDoctorAsync(string[] rest)
 
 async Task<int> RunScanAsync(string[] rest)
 {
-    if (!TryParseCredentialArgs(rest, out var tenantId, out var clientId, out var secret, out var remaining, out var credentialError))
+    var interactive = rest.Contains("--interactive");
+
+    if (!TryParseCredentialArgs(rest, requireSecret: !interactive, out var tenantId, out var clientId, out var secret, out var remaining, out var credentialError))
     {
         Console.Error.WriteLine(credentialError);
         return 2;
@@ -291,6 +293,10 @@ async Task<int> RunScanAsync(string[] rest)
     {
         switch (remaining[i])
         {
+            case "--interactive":
+                break; // already resolved above; consumed here so it isn't flagged as unknown
+
+
             case "--fail-on" when i + 1 < remaining.Count:
                 if (!Enum.TryParse<Severity>(remaining[i + 1], ignoreCase: true, out var parsed))
                 {
@@ -345,14 +351,26 @@ async Task<int> RunScanAsync(string[] rest)
         }
     }
 
-    using var client = GraphHttpClient.Create(
-        tenantId, clientId, secret,
-        verboseLogger: verbose ? line => Console.WriteLine($"[graph] {line}") : null);
+    var verboseLogger = verbose ? (Action<string>)(line => Console.WriteLine($"[graph] {line}")) : null;
+    using var client = interactive
+        ? GraphHttpClient.CreateInteractive(tenantId, clientId, onDeviceCode: Console.WriteLine, verboseLogger)
+        : GraphHttpClient.Create(tenantId, clientId, secret!, verboseLogger);
+
+    // A device code expires 15 minutes after it's issued (Entra ID's own default) — this timeout
+    // makes that explicit rather than relying on however Azure.Identity happens to word the failure.
+    using var interactiveTimeout = interactive ? new CancellationTokenSource(TimeSpan.FromMinutes(15)) : null;
+    var cancellationToken = interactiveTimeout?.Token ?? CancellationToken.None;
+
     TenantSnapshot snapshot;
 
     try
     {
-        snapshot = await new GraphTenantCollector(client).CollectAsync();
+        snapshot = await new GraphTenantCollector(client).CollectAsync(cancellationToken);
+    }
+    catch (OperationCanceledException) when (interactive)
+    {
+        Console.Error.WriteLine("Device code sign-in timed out after 15 minutes without confirmation.");
+        return 2;
     }
     catch (GraphAuthenticationException ex)
     {
@@ -471,9 +489,10 @@ async Task<int> RunDiffAsync(string[] rest)
 
 bool TryParseCredentialArgs(
     string[] rest,
+    bool requireSecret,
     out string tenantId,
     out string clientId,
-    out string secret,
+    out string? secret,
     out List<string> remaining,
     out string? error)
 {
@@ -511,7 +530,7 @@ bool TryParseCredentialArgs(
     {
         error = "Missing required argument --client-id.";
     }
-    else if (parsedSecret is null)
+    else if (requireSecret && parsedSecret is null)
     {
         error = "Missing client secret: pass --secret or set the AEGIS_CLIENT_SECRET environment variable.";
     }
@@ -522,7 +541,7 @@ bool TryParseCredentialArgs(
 
     tenantId = parsedTenantId!;
     clientId = parsedClientId!;
-    secret = parsedSecret!;
+    secret = parsedSecret;
     return error is null;
 }
 
@@ -551,7 +570,7 @@ void PrintUsage()
     Console.WriteLine("                 [--suppressions <suppressions.yaml>] [--quiet] [--verbose]");
     Console.WriteLine("                 [--db <history.db>] [--retention-days <n>]");
     Console.WriteLine("  aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]");
-    Console.WriteLine("  aegis scan --tenant-id <id> --client-id <id> [--secret <secret>]");
+    Console.WriteLine("  aegis scan --tenant-id <id> --client-id <id> [--secret <secret>] | --interactive");
     Console.WriteLine("             [--fail-on <Severity>] [--dump <snapshot.json>]");
     Console.WriteLine("             [--output console|json|csv] [--file <path>]");
     Console.WriteLine("             [--suppressions <suppressions.yaml>] [--quiet] [--verbose]");
@@ -559,6 +578,9 @@ void PrintUsage()
     Console.WriteLine("  aegis diff --db <history.db> --against <scanId>");
     Console.WriteLine();
     Console.WriteLine("  The client secret can also be provided via the AEGIS_CLIENT_SECRET environment variable.");
+    Console.WriteLine("  --interactive signs in via device code instead of a client secret: aegis prints a code and a URL,");
+    Console.WriteLine("  waits for you to confirm in a browser, and evaluates with your account's own delegated permissions.");
+    Console.WriteLine("  Gives up after 15 minutes without confirmation.");
     Console.WriteLine("  --output defaults to console. --output json and --output csv write the report to --file <path> instead of stdout.");
     Console.WriteLine("  --suppressions loads documented finding exceptions from a YAML file (see docs/suppressions.md).");
     Console.WriteLine("  --quiet reduces console output to the score and severity counts. --verbose adds per-control durations");

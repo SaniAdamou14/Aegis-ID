@@ -150,10 +150,12 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
 - **No demo GIF yet.** `aegis demo` reproduces the same output live, in
   seconds, with no setup.
 - **Live collection has not been validated end-to-end against a real
-  tenant.** `src/Aegis.Graph` is unit-tested against fixture HTTP responses
-  and its flags/pagination/retry logic are exercised there, but nobody has
-  yet pointed `aegis scan` at an actual Microsoft 365 Developer tenant. See
-  `docs/dev-tenant-setup.md`.
+  tenant** (same for `--interactive`'s device code flow). `src/Aegis.Graph`
+  is unit-tested against fixture HTTP responses and its flags/pagination/
+  retry logic are exercised there — `--interactive` was confirmed to reach
+  Microsoft's real device-code endpoint and fail cleanly on an unknown
+  tenant, but nobody has yet completed a sign-in against an actual
+  Microsoft 365 Developer tenant. See `docs/dev-tenant-setup.md`.
 - **IAM-002** (standing vs. PIM-eligible role assignment) is not yet
   populated by the live collector — see `docs/controls/IAM-002.md`.
 - **Break-glass detection has no Graph-side signal.** There is no tenant
@@ -192,7 +194,7 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
   - `aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]` —
     reports which of the six required read-only permissions are granted,
     and warns if a write scope was granted by mistake.
-  - `aegis scan --tenant-id <id> --client-id <id> [--secret <secret>]
+  - `aegis scan --tenant-id <id> --client-id <id> [--secret <secret>] | --interactive
     [--fail-on <Severity>] [--dump <snapshot.json>]
     [--output console|json|csv] [--file <path>]
     [--suppressions <suppressions.yaml>] [--quiet] [--verbose]
@@ -201,6 +203,13 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
     backoff + jitter) and evaluates it with the same engine as `evaluate`.
   - Client secret: `--secret`, or the `AEGIS_CLIENT_SECRET` environment
     variable. Never logged, never printed.
+  - `--interactive` (US-002): device code sign-in instead of a client
+    secret — `aegis` prints a code and URL, waits for you to confirm in a
+    browser with your own admin account, and evaluates with whatever is
+    delegated to that account rather than the app registration's own
+    permissions. Gives up after 15 minutes unconfirmed. Still needs
+    `--client-id` for a registered app (public client, no secret needed on
+    it) — it does not remove the need for an app registration entirely.
 - `--output json` writes a versioned JSON report (see `docs/report-schema.md`)
   and `--output csv` writes one row per finding — both require `--file
   <path>`. `--fail-on <Severity>` returns exit code `1` if a finding at or

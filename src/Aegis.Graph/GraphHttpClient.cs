@@ -121,4 +121,13 @@ public sealed class GraphHttpClient : IDisposable
         var httpClient = new HttpClient { BaseAddress = new Uri("https://graph.microsoft.com/v1.0/") };
         return new GraphHttpClient(httpClient, authenticator.GetAccessTokenAsync, ownsHttpClient: true, verboseLogger: verboseLogger);
     }
+
+    /// <summary>Builds a client wired for https://graph.microsoft.com/v1.0 using device code auth (US-002) — no client secret, delegated permissions.</summary>
+    public static GraphHttpClient CreateInteractive(
+        string tenantId, string clientId, Action<string> onDeviceCode, Action<string>? verboseLogger = null)
+    {
+        var authenticator = GraphAuthenticator.CreateInteractive(tenantId, clientId, onDeviceCode);
+        var httpClient = new HttpClient { BaseAddress = new Uri("https://graph.microsoft.com/v1.0/") };
+        return new GraphHttpClient(httpClient, authenticator.GetAccessTokenAsync, ownsHttpClient: true, verboseLogger: verboseLogger);
+    }
 }

@@ -3,14 +3,33 @@ using Azure.Identity;
 
 namespace Aegis.Graph;
 
-/// <summary>Client credentials flow (app-only, no user interaction) — US-001.</summary>
+/// <summary>Wraps a Graph token credential — client credentials (app-only, US-001) or device code (delegated, US-002).</summary>
 public sealed class GraphAuthenticator
 {
     private static readonly string[] Scopes = ["https://graph.microsoft.com/.default"];
-    private readonly ClientSecretCredential _credential;
+    private readonly TokenCredential _credential;
 
     public GraphAuthenticator(string tenantId, string clientId, string clientSecret) =>
         _credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+
+    private GraphAuthenticator(TokenCredential credential) => _credential = credential;
+
+    /// <summary>Device code flow (US-002): no client secret, delegated permissions, a human confirms the code shown via <paramref name="onDeviceCode"/> at the printed URL.</summary>
+    public static GraphAuthenticator CreateInteractive(string tenantId, string clientId, Action<string> onDeviceCode)
+    {
+        var options = new DeviceCodeCredentialOptions
+        {
+            TenantId = tenantId,
+            ClientId = clientId,
+            DeviceCodeCallback = (info, _) =>
+            {
+                onDeviceCode(info.Message);
+                return Task.CompletedTask;
+            },
+        };
+
+        return new GraphAuthenticator(new DeviceCodeCredential(options));
+    }
 
     public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken = default)
     {
