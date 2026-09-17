@@ -57,6 +57,11 @@ credentials used by Aegis-ID itself.
 5. Click **Grant admin consent**. Double-check no write scope was added —
    this is the non-negotiable design principle of the project.
 
+To also try `aegis scan --interactive` (US-002, device code sign-in with
+your own admin account instead of the client secret): **Authentication** →
+enable **Allow public client flows**. No redirect URI or secret needed for
+that flow — only the client ID from step 2.
+
 ## 5. Store credentials locally — never in chat, never in git
 
 `tenantId` and `clientId` are not secret — pass them as CLI flags. The
