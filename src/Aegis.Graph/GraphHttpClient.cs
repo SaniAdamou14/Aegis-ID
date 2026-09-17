@@ -58,13 +58,13 @@ public sealed class GraphHttpClient : IDisposable
             if (!isRetryable || attempt >= MaxAttempts)
             {
                 _verboseLogger?.Invoke(
-                    $"GET {relativeOrAbsoluteUrl} -> {(int)response.StatusCode} ({stopwatch.ElapsedMilliseconds}ms) — giving up");
+                    $"GET {relativeOrAbsoluteUrl} -> {(int)response.StatusCode} ({stopwatch.ElapsedMilliseconds}ms) - giving up");
                 var body = await response.Content.ReadAsStringAsync(cancellationToken);
                 throw new GraphRequestException(response.StatusCode, relativeOrAbsoluteUrl, body);
             }
 
             _verboseLogger?.Invoke(
-                $"GET {relativeOrAbsoluteUrl} -> {(int)response.StatusCode} ({stopwatch.ElapsedMilliseconds}ms) — retrying (attempt {attempt}/{MaxAttempts})");
+                $"GET {relativeOrAbsoluteUrl} -> {(int)response.StatusCode} ({stopwatch.ElapsedMilliseconds}ms) - retrying (attempt {attempt}/{MaxAttempts})");
             var delay = ComputeDelay(response.Headers.RetryAfter, attempt);
             await _retryDelay.DelayAsync(delay, cancellationToken);
         }

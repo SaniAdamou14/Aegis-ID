@@ -4,7 +4,7 @@
   <header class="panel__header">
     <div>
       <app-severity-badge [severity]="finding.severity" />
-      <h2 id="finding-detail-heading">{{ finding.controlId }} — {{ finding.controlTitle }}</h2>
+      <h2 id="finding-detail-heading">{{ finding.controlId }} - {{ finding.controlTitle }}</h2>
     </div>
     <button #closeButton type="button" class="panel__close" (click)="close.emit()">
       <span aria-hidden="true">✕</span>
@@ -15,7 +15,7 @@
   <dl class="panel__meta">
     <div>
       <dt>Object</dt>
-      <dd>{{ finding.objectType }} — {{ finding.objectName }}</dd>
+      <dd>{{ finding.objectType }} - {{ finding.objectName }}</dd>
     </div>
     <div>
       <dt>Detected</dt>
@@ -62,10 +62,10 @@
     <ul class="reference-list">
       <li><a [href]="controlDocUrl" target="_blank" rel="noopener">Control documentation ({{ finding.controlId }})</a></li>
       @if (finding.cisReference) {
-        <li><a [href]="cisUrl" target="_blank" rel="noopener">CIS Microsoft 365 Benchmark — {{ finding.cisReference }}</a></li>
+        <li><a [href]="cisUrl" target="_blank" rel="noopener">CIS Microsoft 365 Benchmark - {{ finding.cisReference }}</a></li>
       }
       @if (mitreUrl) {
-        <li><a [href]="mitreUrl" target="_blank" rel="noopener">MITRE ATT&CK — {{ finding.mitreTechnique }}</a></li>
+        <li><a [href]="mitreUrl" target="_blank" rel="noopener">MITRE ATT&CK - {{ finding.mitreTechnique }}</a></li>
       }
     </ul>
   </section>

@@ -77,7 +77,7 @@
           <tr>
             <td><app-severity-badge [severity]="finding.severity" /></td>
             <td>{{ finding.controlId }}</td>
-            <td>{{ finding.objectType }} — {{ finding.objectName }}</td>
+            <td>{{ finding.objectType }} - {{ finding.objectName }}</td>
             <td class="findings-table__evidence">{{ finding.evidence }}</td>
             <td>
               <button type="button" (click)="select(finding)">Details</button>

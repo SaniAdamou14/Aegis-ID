@@ -184,7 +184,7 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
 - CLI, offline (no network, no tenant needed):
   - `aegis demo` — synthetic embedded snapshot.
   - `aegis evaluate --from <snapshot.json> [--fail-on <Severity>]
-    [--output console|json|csv] [--file <path>]
+    [--output console|json|csv|pdf] [--file <path>] [--branding <branding.json>]
     [--suppressions <suppressions.yaml>] [--quiet] [--verbose]
     [--db <history.db>] [--retention-days <n>]`
   - `aegis diff --db <history.db> --against <scanId>` — compares the
@@ -196,7 +196,7 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
     and warns if a write scope was granted by mistake.
   - `aegis scan --tenant-id <id> --client-id <id> [--secret <secret>] | --interactive
     [--fail-on <Severity>] [--dump <snapshot.json>]
-    [--output console|json|csv] [--file <path>]
+    [--output console|json|csv|pdf] [--file <path>] [--branding <branding.json>]
     [--suppressions <suppressions.yaml>] [--quiet] [--verbose]
     [--db <history.db>] [--retention-days <n>]` —
     collects a live tenant snapshot (paginated, retries on 429/5xx with
@@ -215,6 +215,11 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
   <path>`. `--fail-on <Severity>` returns exit code `1` if a finding at or
   above that severity exists, `0` otherwise; exit code `2` is reserved for
   execution errors.
+- `--output pdf --file <path>` (US-012) generates a client-ready audit
+  report — cover page, executive summary with a severity chart, findings
+  detail, methodology appendix. `--branding <file.json>` puts your own
+  firm name/logo on the cover page instead of Aegis-ID's. See
+  `docs/pdf-report.md`.
 - `--suppressions <file.yaml>` documents accepted exceptions for specific
   findings without hiding them from the report — see `docs/suppressions.md`.
 - `--quiet` limits console output to the score and severity counts;

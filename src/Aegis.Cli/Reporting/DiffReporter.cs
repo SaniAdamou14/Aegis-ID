@@ -8,8 +8,8 @@ public static class DiffReporter
 {
     public static void Report(ScanDiffCalculator.DiffResult diff, ScanRecord current, ScanRecord baseline, TextWriter output)
     {
-        output.WriteLine($"Current:  {current.Id} — {current.EvaluatedAt:u} — score {current.PostureScore}/100");
-        output.WriteLine($"Baseline: {baseline.Id} — {baseline.EvaluatedAt:u} — score {baseline.PostureScore}/100");
+        output.WriteLine($"Current:  {current.Id} - {current.EvaluatedAt:u} - score {current.PostureScore}/100");
+        output.WriteLine($"Baseline: {baseline.Id} - {baseline.EvaluatedAt:u} - score {baseline.PostureScore}/100");
         output.WriteLine();
 
         WriteSection(output, "Appeared", diff.Appeared);

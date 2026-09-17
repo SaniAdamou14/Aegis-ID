@@ -20,7 +20,7 @@
       <span class="score-card__value">{{ report()!.postureScore }}<span class="score-card__max">/100</span></span>
     </div>
 
-    <h2>Posture score — last {{ history().length }} scan{{ history().length === 1 ? '' : 's' }}</h2>
+    <h2>Posture score - last {{ history().length }} scan{{ history().length === 1 ? '' : 's' }}</h2>
     <app-score-history-chart [entries]="history()" />
 
     <h2>Findings by severity</h2>

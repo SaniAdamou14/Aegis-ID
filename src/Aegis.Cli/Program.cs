@@ -42,6 +42,7 @@ async Task<int> RunEvaluateAsync(string[] rest)
     string? filePath = null;
     string? suppressionsPath = null;
     string? dbPath = null;
+    string? brandingPath = null;
     var retentionDays = 90;
     var quiet = false;
     var verbose = false;
@@ -75,6 +76,10 @@ async Task<int> RunEvaluateAsync(string[] rest)
 
             case "--suppressions" when i + 1 < rest.Length:
                 suppressionsPath = rest[++i];
+                break;
+
+            case "--branding" when i + 1 < rest.Length:
+                brandingPath = rest[++i];
                 break;
 
             case "--db" when i + 1 < rest.Length:
@@ -129,7 +134,7 @@ async Task<int> RunEvaluateAsync(string[] rest)
     if (dbPath is not null)
         await SaveToHistoryAsync(dbPath, retentionDays, result);
 
-    var writeExitCode = WriteReport(result, outputFormat, filePath, quiet, verbose);
+    var writeExitCode = WriteReport(result, outputFormat, filePath, quiet, verbose, brandingPath);
     if (writeExitCode != 0)
         return writeExitCode;
 
@@ -180,7 +185,7 @@ bool TryApplySuppressions(string? suppressionsPath, ref ScanResult result)
     return true;
 }
 
-int WriteReport(ScanResult result, string outputFormat, string? filePath, bool quiet, bool verbose)
+int WriteReport(ScanResult result, string outputFormat, string? filePath, bool quiet, bool verbose, string? brandingPath = null)
 {
     switch (outputFormat)
     {
@@ -206,8 +211,32 @@ int WriteReport(ScanResult result, string outputFormat, string? filePath, bool q
             File.WriteAllText(filePath, CsvReporter.Serialize(result));
             return 0;
 
+        case "pdf":
+            if (filePath is null)
+            {
+                Console.Error.WriteLine("--output pdf requires --file <path>.");
+                return 2;
+            }
+
+            ReportBranding? branding = null;
+            if (brandingPath is not null)
+            {
+                try
+                {
+                    branding = ReportBranding.Load(brandingPath);
+                }
+                catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException)
+                {
+                    Console.Error.WriteLine($"Failed to load branding '{brandingPath}': {ex.Message}");
+                    return 2;
+                }
+            }
+
+            PdfReporter.GenerateFile(result, filePath, branding);
+            return 0;
+
         default:
-            Console.Error.WriteLine($"Unknown --output value '{outputFormat}'. Expected one of: console, json, csv.");
+            Console.Error.WriteLine($"Unknown --output value '{outputFormat}'. Expected one of: console, json, csv, pdf.");
             return 2;
     }
 }
@@ -256,7 +285,7 @@ async Task<int> RunDoctorAsync(string[] rest)
         Console.WriteLine();
         Console.WriteLine("WARNING: the following write scopes are granted but not needed by Aegis-ID:");
         foreach (var scope in report.UnexpectedWriteScopes)
-            Console.WriteLine($"  {scope} — recommend removing this permission from the app registration.");
+            Console.WriteLine($"  {scope} - recommend removing this permission from the app registration.");
     }
 
     if (!report.AllRequiredGranted)
@@ -285,6 +314,7 @@ async Task<int> RunScanAsync(string[] rest)
     string? filePath = null;
     string? suppressionsPath = null;
     string? dbPath = null;
+    string? brandingPath = null;
     var retentionDays = 90;
     var quiet = false;
     var verbose = false;
@@ -295,7 +325,6 @@ async Task<int> RunScanAsync(string[] rest)
         {
             case "--interactive":
                 break; // already resolved above; consumed here so it isn't flagged as unknown
-
 
             case "--fail-on" when i + 1 < remaining.Count:
                 if (!Enum.TryParse<Severity>(remaining[i + 1], ignoreCase: true, out var parsed))
@@ -322,6 +351,10 @@ async Task<int> RunScanAsync(string[] rest)
 
             case "--suppressions" when i + 1 < remaining.Count:
                 suppressionsPath = remaining[++i];
+                break;
+
+            case "--branding" when i + 1 < remaining.Count:
+                brandingPath = remaining[++i];
                 break;
 
             case "--db" when i + 1 < remaining.Count:
@@ -394,7 +427,7 @@ async Task<int> RunScanAsync(string[] rest)
     if (dbPath is not null)
         await SaveToHistoryAsync(dbPath, retentionDays, result);
 
-    var writeExitCode = WriteReport(result, outputFormat, filePath, quiet, verbose);
+    var writeExitCode = WriteReport(result, outputFormat, filePath, quiet, verbose, brandingPath);
     if (writeExitCode != 0)
         return writeExitCode;
 
@@ -566,13 +599,13 @@ void PrintUsage()
     Console.WriteLine("Usage:");
     Console.WriteLine("  aegis demo");
     Console.WriteLine("  aegis evaluate --from <snapshot.json> [--fail-on <Severity>]");
-    Console.WriteLine("                 [--output console|json|csv] [--file <path>]");
+    Console.WriteLine("                 [--output console|json|csv|pdf] [--file <path>] [--branding <branding.json>]");
     Console.WriteLine("                 [--suppressions <suppressions.yaml>] [--quiet] [--verbose]");
     Console.WriteLine("                 [--db <history.db>] [--retention-days <n>]");
     Console.WriteLine("  aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]");
     Console.WriteLine("  aegis scan --tenant-id <id> --client-id <id> [--secret <secret>] | --interactive");
     Console.WriteLine("             [--fail-on <Severity>] [--dump <snapshot.json>]");
-    Console.WriteLine("             [--output console|json|csv] [--file <path>]");
+    Console.WriteLine("             [--output console|json|csv|pdf] [--file <path>] [--branding <branding.json>]");
     Console.WriteLine("             [--suppressions <suppressions.yaml>] [--quiet] [--verbose]");
     Console.WriteLine("             [--db <history.db>] [--retention-days <n>]");
     Console.WriteLine("  aegis diff --db <history.db> --against <scanId>");
@@ -581,7 +614,10 @@ void PrintUsage()
     Console.WriteLine("  --interactive signs in via device code instead of a client secret: aegis prints a code and a URL,");
     Console.WriteLine("  waits for you to confirm in a browser, and evaluates with your account's own delegated permissions.");
     Console.WriteLine("  Gives up after 15 minutes without confirmation.");
-    Console.WriteLine("  --output defaults to console. --output json and --output csv write the report to --file <path> instead of stdout.");
+    Console.WriteLine("  --output defaults to console. --output json, csv, and pdf write the report to --file <path> instead of stdout.");
+    Console.WriteLine("  --output pdf produces a client-ready audit report (cover page, executive summary, findings detail,");
+    Console.WriteLine("  methodology). --branding points to a JSON file ({\"firmName\": \"...\", \"logoPath\": \"...\"}) to put your");
+    Console.WriteLine("  own name and logo on the cover page instead of Aegis-ID's.");
     Console.WriteLine("  --suppressions loads documented finding exceptions from a YAML file (see docs/suppressions.md).");
     Console.WriteLine("  --quiet reduces console output to the score and severity counts. --verbose adds per-control durations");
     Console.WriteLine("  (and, for scan, each Graph HTTP call).");
