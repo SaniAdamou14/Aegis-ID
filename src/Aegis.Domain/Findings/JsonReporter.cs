@@ -1,10 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Aegis.Domain.Findings;
 
-namespace Aegis.Cli.Reporting;
+namespace Aegis.Domain.Findings;
 
-/// <summary>Serializes a <see cref="ScanResult"/> to the versioned JSON report schema (US-010). See docs/report-schema.md.</summary>
+/// <summary>Serializes a <see cref="ScanResult"/> to the versioned JSON report schema (US-010). See docs/report-schema.md. Shared by Aegis.Cli and Aegis.Api so both expose the exact same contract.</summary>
 public static class JsonReporter
 {
     public const string SchemaVersion = "1.0";
