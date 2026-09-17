@@ -63,3 +63,21 @@ itself).
 A finding that is merely suppressed (`aegis-suppressions.yaml`) between the
 two scans still counts as unchanged — suppression documents an accepted
 exception, it doesn't mean the underlying condition was fixed.
+
+## Dashboard: score-over-time chart
+
+`Aegis.Api` exposes `GET /api/scans/history?limit=10` (oldest first), read
+by the Overview page's chart. Point it at the same file `--db` writes to:
+
+```json
+// src/Aegis.Api/appsettings.json
+{
+  "Persistence": { "DbPath": "aegis-history.db" }
+}
+```
+
+or the `Persistence__DbPath` environment variable (the double underscore
+is ASP.NET Core's config-section separator). If that file doesn't exist
+yet, the endpoint returns an empty array and the chart shows its own
+empty state rather than an error — recording history is opt-in, so an
+empty history is a normal state, not a failure.

@@ -15,6 +15,7 @@
   --severity-info: #898781;
 
   --focus-ring: #2a78d6;
+  --chart-series-1: #2a78d6;
 
   --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -37,6 +38,7 @@
     --severity-info: #898781;
 
     --focus-ring: #3987e5;
+    --chart-series-1: #3987e5;
   }
 }
 
@@ -57,6 +59,7 @@
   --severity-info: #898781;
 
   --focus-ring: #3987e5;
+  --chart-series-1: #3987e5;
 }
 
 * {
