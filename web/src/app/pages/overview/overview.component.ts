@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { ScoreHistoryChartComponent } from '../../components/score-history-chart/score-history-chart.component';
 import { SeverityBadgeComponent } from '../../components/severity-badge/severity-badge.component';
 import { SEVERITY_ORDER, Severity } from '../../models/scan-report';
 import { ScanService } from '../../services/scan.service';
@@ -9,7 +10,7 @@ import { ScanService } from '../../services/scan.service';
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [SeverityBadgeComponent, DatePipe],
+  imports: [SeverityBadgeComponent, ScoreHistoryChartComponent, DatePipe],
   templateUrl: './overview.component.html',
   styleUrl: './overview.component.css',
 })
@@ -20,6 +21,7 @@ export class OverviewComponent implements OnInit {
   readonly report = this.scanService.report;
   readonly loading = this.scanService.loading;
   readonly error = this.scanService.error;
+  readonly history = this.scanService.history;
   readonly severityOrder = SEVERITY_ORDER;
 
   readonly controlCounts = computed(() => {
@@ -37,6 +39,7 @@ export class OverviewComponent implements OnInit {
     if (!this.report()) {
       this.scanService.loadDemo();
     }
+    this.scanService.loadHistory();
   }
 
   retry(): void {

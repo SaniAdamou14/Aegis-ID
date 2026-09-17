@@ -1,0 +1,48 @@
+@if (entries().length < 2) {
+  <p class="empty-state">
+    Not enough history yet — run <code>aegis evaluate --db &lt;path&gt;</code> or
+    <code>aegis scan --db &lt;path&gt;</code> at least twice to see a trend.
+  </p>
+} @else {
+  <p class="chart-readout" aria-live="polite">
+    @if (hoveredPoint(); as hp) {
+      {{ hp.entry.evaluatedAt | date: 'medium' }} — score {{ hp.entry.postureScore }}/100
+    } @else {
+      Hover or focus a point for its date and score.
+    }
+  </p>
+
+  <svg
+    [attr.viewBox]="'0 0 ' + width + ' ' + height"
+    role="group"
+    [attr.aria-label]="'Posture score over the last ' + entries().length + ' scans, from ' + points()[0].entry.postureScore + ' to ' + lastPoint()!.entry.postureScore"
+  >
+    @for (grid of gridLines(); track grid.label) {
+      <line class="gridline" [attr.x1]="34" [attr.x2]="width - 20" [attr.y1]="grid.y" [attr.y2]="grid.y" />
+      <text class="axis-label" x="28" [attr.y]="grid.y" text-anchor="end" dominant-baseline="middle">{{ grid.label }}</text>
+    }
+
+    <path class="area" [attr.d]="areaPath()" />
+    <path class="line" [attr.d]="linePath()" />
+
+    @for (point of points(); track $index; let i = $index) {
+      <circle class="marker" [class.marker--hovered]="hoveredIndex() === i" [attr.cx]="point.x" [attr.cy]="point.y" r="4" />
+      <circle
+        class="marker-hit"
+        [attr.cx]="point.x"
+        [attr.cy]="point.y"
+        r="12"
+        tabindex="0"
+        [attr.aria-label]="(point.entry.evaluatedAt | date: 'medium') + ': score ' + point.entry.postureScore"
+        (mouseenter)="onHover(i)"
+        (mouseleave)="onLeave()"
+        (focus)="onHover(i)"
+        (blur)="onLeave()"
+      />
+    }
+
+    @if (lastPoint(); as last) {
+      <text class="end-label" [attr.x]="last.x" [attr.y]="last.y - 10" text-anchor="end">{{ last.entry.postureScore }}</text>
+    }
+  </svg>
+}

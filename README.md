@@ -136,6 +136,12 @@ Then open <http://localhost:4200>. Filters and the selected finding are
 reflected in the URL, so a filtered view is shareable and survives a
 reload. Severity is always shown as text, never color alone.
 
+The Overview page also charts the posture score across the last 10 scans
+recorded with `aegis evaluate/scan --db` — set `Persistence:DbPath` in
+`src/Aegis.Api/appsettings.json` (or the `Persistence__DbPath` environment
+variable) to that same SQLite file so the API can read it. See
+`docs/history.md`.
+
 `docker compose up` builds and runs both the API and the dashboard (behind
 an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
 
@@ -155,11 +161,13 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
   is always `false` from a live scan today. A config file to let operators
   mark known break-glass UPNs is a natural follow-up (tracked informally,
   not yet a user story).
-- **The dashboard only shows the demo scan today.** `Aegis.Api` serves the
-  embedded demo tenant and accepts a posted snapshot for offline evaluation.
-  Scan history and `aegis diff` exist CLI-side (`docs/history.md`), but the
-  dashboard doesn't read from that history yet — no score-over-time chart,
-  and a live `aegis scan` result isn't wired into the dashboard either.
+- **The dashboard's live scan is still the demo tenant.** `Aegis.Api` serves
+  the embedded demo tenant and accepts a posted snapshot for offline
+  evaluation; a live `aegis scan` result isn't wired into the dashboard.
+  The Overview page does now show a score-over-time chart, but only for
+  scans recorded via `aegis evaluate/scan --db` into the SQLite file
+  `Aegis.Api` is pointed at (`Persistence:DbPath`, see `docs/history.md`)
+  — it's empty until something writes to that file.
 - **No coverage badge** — needs a third-party coverage service account, a
   purely CI-tooling gap unrelated to the product itself.
 - Out of scope for v1 by design (not limitations, decisions — see

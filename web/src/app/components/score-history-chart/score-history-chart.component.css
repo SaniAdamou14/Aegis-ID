@@ -1,0 +1,79 @@
+:host {
+  display: block;
+}
+
+.empty-state {
+  color: var(--text-secondary);
+  background: var(--surface-page);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0;
+}
+
+.empty-state code {
+  font-size: 0.85em;
+}
+
+.chart-readout {
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  min-height: 1.2em;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.gridline {
+  stroke: var(--gridline);
+  stroke-width: 1;
+}
+
+.axis-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.area {
+  fill: var(--chart-series-1);
+  fill-opacity: 0.1;
+  stroke: none;
+}
+
+.line {
+  fill: none;
+  stroke: var(--chart-series-1);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.marker {
+  fill: var(--chart-series-1);
+  stroke: var(--surface-card);
+  stroke-width: 2;
+}
+
+.marker--hovered {
+  r: 6;
+}
+
+.marker-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.marker-hit:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.end-label {
+  fill: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+}

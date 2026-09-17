@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { catchError, of, tap } from 'rxjs';
 
 import { API_BASE_URL } from '../config';
-import { FlatFinding, ScanReport } from '../models/scan-report';
+import { FlatFinding, ScanHistoryEntry, ScanReport } from '../models/scan-report';
 
 @Injectable({ providedIn: 'root' })
 export class ScanService {
@@ -12,10 +12,12 @@ export class ScanService {
   private readonly _report = signal<ScanReport | null>(null);
   private readonly _loading = signal(false);
   private readonly _error = signal<string | null>(null);
+  private readonly _history = signal<ScanHistoryEntry[]>([]);
 
   readonly report = this._report.asReadonly();
   readonly loading = this._loading.asReadonly();
   readonly error = this._error.asReadonly();
+  readonly history = this._history.asReadonly();
 
   /** All findings across all controls, flattened with a stable id for routing/selection. */
   readonly findings = computed<FlatFinding[]>(() => {
@@ -49,5 +51,19 @@ export class ScanService {
         }),
       )
       .subscribe(() => this._loading.set(false));
+  }
+
+  /** Best-effort: an empty/missing history is a normal state (the chart shows its own empty state), not an error to surface. */
+  loadHistory(limit = 10): void {
+    this.http
+      .get<ScanHistoryEntry[]>(`${API_BASE_URL}/api/scans/history`, { params: { limit } })
+      .pipe(
+        tap((entries) => this._history.set(entries)),
+        catchError(() => {
+          this._history.set([]);
+          return of(null);
+        }),
+      )
+      .subscribe();
   }
 }

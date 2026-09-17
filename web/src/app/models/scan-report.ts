@@ -51,6 +51,14 @@ export interface FlatFinding extends Finding {
   controlTitle: string;
 }
 
+/** One row from GET /api/scans/history — oldest first (US-018). */
+export interface ScanHistoryEntry {
+  id: string;
+  evaluatedAt: string;
+  tenant: string;
+  postureScore: number;
+}
+
 export const SEVERITY_ORDER: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 
 export const SEVERITY_LABEL: Record<Severity, string> = {
