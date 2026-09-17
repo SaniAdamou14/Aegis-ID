@@ -6,6 +6,7 @@ using Aegis.Domain.Controls;
 using Aegis.Domain.Findings;
 using Aegis.Domain.Snapshot;
 using Aegis.Graph;
+using Aegis.Persistence;
 
 var engine = ControlEngine.DiscoverFrom(typeof(PrivilegedAccountsWithoutStrongMfaControl).Assembly);
 
@@ -18,9 +19,10 @@ if (args.Length == 0)
 return args[0] switch
 {
     "demo" => RunDemo(),
-    "evaluate" => RunEvaluate(args.Skip(1).ToArray()),
+    "evaluate" => await RunEvaluateAsync(args.Skip(1).ToArray()),
     "doctor" => await RunDoctorAsync(args.Skip(1).ToArray()),
     "scan" => await RunScanAsync(args.Skip(1).ToArray()),
+    "diff" => await RunDiffAsync(args.Skip(1).ToArray()),
     _ => Unknown(args[0]),
 };
 
@@ -32,13 +34,15 @@ int RunDemo()
     return 0;
 }
 
-int RunEvaluate(string[] rest)
+async Task<int> RunEvaluateAsync(string[] rest)
 {
     string? fromPath = null;
     Severity? failOn = null;
     string outputFormat = "console";
     string? filePath = null;
     string? suppressionsPath = null;
+    string? dbPath = null;
+    var retentionDays = 90;
     var quiet = false;
     var verbose = false;
 
@@ -71,6 +75,19 @@ int RunEvaluate(string[] rest)
 
             case "--suppressions" when i + 1 < rest.Length:
                 suppressionsPath = rest[++i];
+                break;
+
+            case "--db" when i + 1 < rest.Length:
+                dbPath = rest[++i];
+                break;
+
+            case "--retention-days" when i + 1 < rest.Length:
+                if (!int.TryParse(rest[i + 1], out retentionDays) || retentionDays < 1)
+                {
+                    Console.Error.WriteLine($"Invalid --retention-days value '{rest[i + 1]}'. Expected a positive integer.");
+                    return 2;
+                }
+                i++;
                 break;
 
             case "--quiet":
@@ -109,6 +126,9 @@ int RunEvaluate(string[] rest)
     if (!TryApplySuppressions(suppressionsPath, ref result))
         return 2;
 
+    if (dbPath is not null)
+        await SaveToHistoryAsync(dbPath, retentionDays, result);
+
     var writeExitCode = WriteReport(result, outputFormat, filePath, quiet, verbose);
     if (writeExitCode != 0)
         return writeExitCode;
@@ -120,6 +140,14 @@ int RunEvaluate(string[] rest)
     }
 
     return 0;
+}
+
+async Task SaveToHistoryAsync(string dbPath, int retentionDays, ScanResult result)
+{
+    using var db = AegisDbContextFactory.CreateSqlite(dbPath);
+    var store = new ScanHistoryStore(db);
+    var record = await store.SaveAsync(result, TimeSpan.FromDays(retentionDays));
+    Console.WriteLine($"Saved scan {record.Id} to '{dbPath}' (retention: {retentionDays} days).");
 }
 
 bool TryApplySuppressions(string? suppressionsPath, ref ScanResult result)
@@ -254,6 +282,8 @@ async Task<int> RunScanAsync(string[] rest)
     string outputFormat = "console";
     string? filePath = null;
     string? suppressionsPath = null;
+    string? dbPath = null;
+    var retentionDays = 90;
     var quiet = false;
     var verbose = false;
 
@@ -286,6 +316,19 @@ async Task<int> RunScanAsync(string[] rest)
 
             case "--suppressions" when i + 1 < remaining.Count:
                 suppressionsPath = remaining[++i];
+                break;
+
+            case "--db" when i + 1 < remaining.Count:
+                dbPath = remaining[++i];
+                break;
+
+            case "--retention-days" when i + 1 < remaining.Count:
+                if (!int.TryParse(remaining[i + 1], out retentionDays) || retentionDays < 1)
+                {
+                    Console.Error.WriteLine($"Invalid --retention-days value '{remaining[i + 1]}'. Expected a positive integer.");
+                    return 2;
+                }
+                i++;
                 break;
 
             case "--quiet":
@@ -330,6 +373,9 @@ async Task<int> RunScanAsync(string[] rest)
     if (!TryApplySuppressions(suppressionsPath, ref result))
         return 2;
 
+    if (dbPath is not null)
+        await SaveToHistoryAsync(dbPath, retentionDays, result);
+
     var writeExitCode = WriteReport(result, outputFormat, filePath, quiet, verbose);
     if (writeExitCode != 0)
         return writeExitCode;
@@ -341,6 +387,86 @@ async Task<int> RunScanAsync(string[] rest)
     }
 
     return 0;
+}
+
+async Task<int> RunDiffAsync(string[] rest)
+{
+    string? dbPath = null;
+    Guid? against = null;
+
+    for (var i = 0; i < rest.Length; i++)
+    {
+        switch (rest[i])
+        {
+            case "--db" when i + 1 < rest.Length:
+                dbPath = rest[++i];
+                break;
+
+            case "--against" when i + 1 < rest.Length:
+                if (!Guid.TryParse(rest[i + 1], out var parsedId))
+                {
+                    Console.Error.WriteLine($"Invalid --against value '{rest[i + 1]}'. Expected a scan id (GUID).");
+                    return 2;
+                }
+                against = parsedId;
+                i++;
+                break;
+
+            default:
+                Console.Error.WriteLine($"Unknown argument '{rest[i]}'.");
+                return 2;
+        }
+    }
+
+    if (dbPath is null)
+    {
+        Console.Error.WriteLine("Missing required argument --db <path>.");
+        return 2;
+    }
+
+    if (against is null)
+    {
+        Console.Error.WriteLine("Missing required argument --against <scanId>.");
+        return 2;
+    }
+
+    if (!File.Exists(dbPath))
+    {
+        Console.Error.WriteLine($"No history database found at '{dbPath}'.");
+        return 2;
+    }
+
+    using var db = AegisDbContextFactory.CreateSqlite(dbPath);
+    var store = new ScanHistoryStore(db);
+
+    var current = await store.GetLatestAsync();
+    if (current is null)
+    {
+        Console.Error.WriteLine($"No scans recorded in '{dbPath}' yet.");
+        return 2;
+    }
+
+    var baseline = await store.GetByIdAsync(against.Value);
+    if (baseline is null)
+    {
+        Console.Error.WriteLine($"No scan found with id '{against}' in '{dbPath}'.");
+        return 2;
+    }
+
+    if (current.Id == baseline.Id)
+    {
+        Console.Error.WriteLine("--against refers to the latest recorded scan; nothing to compare.");
+        return 2;
+    }
+
+    var currentFindings = ScanRecordJsonReader.ReadFindings(current.ReportJson);
+    var baselineFindings = ScanRecordJsonReader.ReadFindings(baseline.ReportJson);
+    var diff = ScanDiffCalculator.Compare(currentFindings, baselineFindings);
+
+    DiffReporter.Report(diff, current, baseline, Console.Out);
+
+    var hasBreach = diff.Appeared.Any(f => f.Severity is Severity.Critical or Severity.High);
+    return hasBreach ? 1 : 0;
 }
 
 bool TryParseCredentialArgs(
@@ -423,15 +549,21 @@ void PrintUsage()
     Console.WriteLine("  aegis evaluate --from <snapshot.json> [--fail-on <Severity>]");
     Console.WriteLine("                 [--output console|json|csv] [--file <path>]");
     Console.WriteLine("                 [--suppressions <suppressions.yaml>] [--quiet] [--verbose]");
+    Console.WriteLine("                 [--db <history.db>] [--retention-days <n>]");
     Console.WriteLine("  aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]");
     Console.WriteLine("  aegis scan --tenant-id <id> --client-id <id> [--secret <secret>]");
     Console.WriteLine("             [--fail-on <Severity>] [--dump <snapshot.json>]");
     Console.WriteLine("             [--output console|json|csv] [--file <path>]");
     Console.WriteLine("             [--suppressions <suppressions.yaml>] [--quiet] [--verbose]");
+    Console.WriteLine("             [--db <history.db>] [--retention-days <n>]");
+    Console.WriteLine("  aegis diff --db <history.db> --against <scanId>");
     Console.WriteLine();
     Console.WriteLine("  The client secret can also be provided via the AEGIS_CLIENT_SECRET environment variable.");
     Console.WriteLine("  --output defaults to console. --output json and --output csv write the report to --file <path> instead of stdout.");
     Console.WriteLine("  --suppressions loads documented finding exceptions from a YAML file (see docs/suppressions.md).");
     Console.WriteLine("  --quiet reduces console output to the score and severity counts. --verbose adds per-control durations");
     Console.WriteLine("  (and, for scan, each Graph HTTP call).");
+    Console.WriteLine("  --db records the scan in a local SQLite history file (retention: 90 days by default); omit it and nothing");
+    Console.WriteLine("  is persisted. aegis diff compares the latest recorded scan in --db against the --against scan id and");
+    Console.WriteLine("  exits 1 if a new Critical or High finding appeared.");
 }

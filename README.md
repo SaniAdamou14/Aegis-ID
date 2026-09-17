@@ -108,7 +108,8 @@ flowchart LR
 | `Aegis.Domain` | Core model (`TenantSnapshot`, `Finding`, `ControlEngine`, scoring). Zero external dependencies. | — |
 | `Aegis.Controls` | The 15 `IControl` implementations (business rules). | `Aegis.Domain` |
 | `Aegis.Graph` | Live Microsoft Graph collection: auth, pagination, retry/backoff, permission check. | `Aegis.Domain` |
-| `Aegis.Cli` | Commands (`demo`, `evaluate`, `doctor`, `scan`), console/JSON/CSV reporters, suppressions. | all of the above |
+| `Aegis.Cli` | Commands (`demo`, `evaluate`, `doctor`, `scan`, `diff`), console/JSON/CSV reporters, suppressions. | all of the above, `Aegis.Persistence` |
+| `Aegis.Persistence` | Opt-in scan history (SQLite via EF Core) and scan-to-scan diffing. | `Aegis.Domain` |
 | `Aegis.Api` | Minimal ASP.NET Core API serving scan results as JSON to the dashboard. | `Aegis.Domain`, `Aegis.Controls` |
 | `web/` | Angular 19 dashboard (standalone components, signals). | `Aegis.Api` (HTTP) |
 
@@ -155,10 +156,10 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
   mark known break-glass UPNs is a natural follow-up (tracked informally,
   not yet a user story).
 - **The dashboard only shows the demo scan today.** `Aegis.Api` serves the
-  embedded demo tenant and accepts a posted snapshot for offline evaluation,
-  but there is no persistence, scan history, or scan-to-scan comparison yet
-  (E7 of the backlog) — a live `aegis scan` result isn't wired into the
-  dashboard yet either.
+  embedded demo tenant and accepts a posted snapshot for offline evaluation.
+  Scan history and `aegis diff` exist CLI-side (`docs/history.md`), but the
+  dashboard doesn't read from that history yet — no score-over-time chart,
+  and a live `aegis scan` result isn't wired into the dashboard either.
 - **No coverage badge** — needs a third-party coverage service account, a
   purely CI-tooling gap unrelated to the product itself.
 - Out of scope for v1 by design (not limitations, decisions — see
@@ -174,7 +175,11 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
   - `aegis demo` — synthetic embedded snapshot.
   - `aegis evaluate --from <snapshot.json> [--fail-on <Severity>]
     [--output console|json|csv] [--file <path>]
-    [--suppressions <suppressions.yaml>] [--quiet] [--verbose]`
+    [--suppressions <suppressions.yaml>] [--quiet] [--verbose]
+    [--db <history.db>] [--retention-days <n>]`
+  - `aegis diff --db <history.db> --against <scanId>` — compares the
+    latest recorded scan to an earlier one; exit `1` if a new
+    Critical/High finding appeared. See `docs/history.md`.
 - CLI, live Microsoft Graph (client credentials flow, US-001/003/004):
   - `aegis doctor --tenant-id <id> --client-id <id> [--secret <secret>]` —
     reports which of the six required read-only permissions are granted,
@@ -182,7 +187,8 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
   - `aegis scan --tenant-id <id> --client-id <id> [--secret <secret>]
     [--fail-on <Severity>] [--dump <snapshot.json>]
     [--output console|json|csv] [--file <path>]
-    [--suppressions <suppressions.yaml>] [--quiet] [--verbose]` —
+    [--suppressions <suppressions.yaml>] [--quiet] [--verbose]
+    [--db <history.db>] [--retention-days <n>]` —
     collects a live tenant snapshot (paginated, retries on 429/5xx with
     backoff + jitter) and evaluates it with the same engine as `evaluate`.
   - Client secret: `--secret`, or the `AEGIS_CLIENT_SECRET` environment
@@ -197,6 +203,10 @@ an nginx reverse proxy for `/api`) — see `docker-compose.yml`.
 - `--quiet` limits console output to the score and severity counts;
   `--verbose` adds per-control durations (and, for `scan`, each Graph HTTP
   call).
+- `--db <path>` records the scan to a local SQLite history file (opt-in;
+  90-day retention by default, `--retention-days` to override), and
+  `aegis diff --db <path> --against <scanId>` compares the latest recorded
+  scan to an earlier one — see `docs/history.md`.
 
 See `Aegis-ID_Product_Backlog.md` for the full product backlog and
 `docs/threat-model.md` for the threat model.

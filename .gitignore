@@ -14,7 +14,12 @@ appsettings.Local.json
 *.snapshot.json
 !data/snapshots/demo-tenant.json
 
-## Angular / Node (future dashboard)
+## Scan history databases (--db)
+*.db
+*.db-shm
+*.db-wal
+
+## Angular / Node (web/ dashboard)
 node_modules/
 dist/
 .angular/
