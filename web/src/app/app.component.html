@@ -1,0 +1,15 @@
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<header class="app-header">
+  <div class="app-header__inner">
+    <span class="app-header__title">Aegis-ID</span>
+    <nav aria-label="Primary">
+      <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Overview</a>
+      <a routerLink="/findings" routerLinkActive="is-active">Findings</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main-content" class="app-main">
+  <router-outlet />
+</main>

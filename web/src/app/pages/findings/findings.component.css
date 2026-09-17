@@ -1,0 +1,155 @@
+:host {
+  display: block;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: 1.5rem;
+}
+
+.status-message {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+}
+
+.status-message--error {
+  border-color: var(--severity-critical);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-field--grow {
+  flex: 1 1 220px;
+}
+
+.filter-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.filter-field select,
+.filter-field input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-card);
+  min-height: 40px;
+}
+
+.filters__clear {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-page);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.result-count {
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+}
+
+.findings-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.findings-table th,
+.findings-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--gridline);
+  vertical-align: top;
+}
+
+.findings-table th {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.findings-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.findings-table__evidence {
+  max-width: 360px;
+}
+
+.findings-table button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-page);
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pagination button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-card);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .findings-table thead {
+    display: none;
+  }
+
+  .findings-table,
+  .findings-table tbody,
+  .findings-table tr,
+  .findings-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .findings-table tr {
+    border-bottom: 1px solid var(--gridline);
+    padding: 12px;
+  }
+
+  .findings-table td {
+    border-bottom: none;
+    padding: 4px 0;
+  }
+}

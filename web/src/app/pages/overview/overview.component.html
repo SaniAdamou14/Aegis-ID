@@ -1,0 +1,55 @@
+@if (loading()) {
+  <p class="status-message" role="status">Loading the latest scan…</p>
+} @else if (error()) {
+  <div class="status-message status-message--error" role="alert">
+    <p>{{ error() }}</p>
+    <button type="button" (click)="retry()">Retry</button>
+  </div>
+} @else if (!report()) {
+  <div class="status-message">
+    <p>No scan has been run yet.</p>
+    <button type="button" (click)="retry()">Run the demo scan</button>
+  </div>
+} @else {
+  <section aria-labelledby="overview-heading">
+    <h1 id="overview-heading">{{ report()!.tenant }}</h1>
+    <p class="scan-meta">Last scan: <time [attr.datetime]="report()!.evaluatedAt">{{ report()!.evaluatedAt | date: 'medium' }}</time></p>
+
+    <div class="score-card">
+      <span class="score-card__label">Posture score</span>
+      <span class="score-card__value">{{ report()!.postureScore }}<span class="score-card__max">/100</span></span>
+    </div>
+
+    <h2>Findings by severity</h2>
+    <ul class="kpi-row" role="list">
+      @for (severity of severityOrder; track severity) {
+        <li>
+          <button type="button" class="kpi-tile" (click)="goToSeverity(severity)">
+            <span class="kpi-tile__value">{{ severityCount(severity) }}</span>
+            <app-severity-badge [severity]="severity" />
+          </button>
+        </li>
+      }
+    </ul>
+
+    <h2>Controls</h2>
+    <ul class="kpi-row" role="list">
+      <li class="kpi-tile kpi-tile--static">
+        <span class="kpi-tile__value">{{ controlCounts().passed }}</span>
+        <span>Passed</span>
+      </li>
+      <li class="kpi-tile kpi-tile--static">
+        <span class="kpi-tile__value">{{ controlCounts().failed }}</span>
+        <span>Failed</span>
+      </li>
+      <li class="kpi-tile kpi-tile--static">
+        <span class="kpi-tile__value">{{ controlCounts().skipped }}</span>
+        <span>Skipped</span>
+      </li>
+      <li class="kpi-tile kpi-tile--static">
+        <span class="kpi-tile__value">{{ controlCounts().error }}</span>
+        <span>Errored</span>
+      </li>
+    </ul>
+  </section>
+}
