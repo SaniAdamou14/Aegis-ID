@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Aegis.Cli.Reporting;
 using Aegis.Domain.Findings;
 
 namespace Aegis.Cli.Tests;
